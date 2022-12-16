@@ -5,7 +5,7 @@ from agents.Agent import Agent
 class Agent_TicTacToe(Agent):
     """Agents plays tic-tac-toe"""
     def __init__(self, agent_idx=None):
-        self.agent_idx = agent_idx # the agent index (which specifies how they mark the game state) (e.g. 0 for player 0, 1 for player 1, etc.)
+        super().__init__(agent_idx)
     
     def valid_moves(self, state):
         valid = []
