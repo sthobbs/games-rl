@@ -131,12 +131,94 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
             yv.extend(yv_)
             Xp.extend(Xp_)
             yp.extend(yp_)
+        # augment data
+        Xv, yv, Xp, yp = self.augment_data(Xv, yv, Xp, yp)
+        # convert to tensors
         Xv = torch.FloatTensor(Xv)
         yv = torch.FloatTensor(yv)
         Xp = torch.FloatTensor(Xp)
         yp = torch.LongTensor(yp)
         return Xv, yv, Xp, yp
 
+    def augment_data(self, Xv, yv, Xp, yp):
+        """since tic tac toe is invariant to rotations and reflections,
+        return all rotations and reflections of data.
+        """
+        # Augment Value network
+        new_Xv, new_yv = Xv[:], yv[:]
+        for X, y in zip(Xv, yv):
+            # reflect
+            X_, _ = self.reflect(X, 0)
+            new_Xv.append(X_)
+            new_yv.append(y)
+            # rotate
+            X, _ = self.rotate(X, 0)
+            new_Xv.append(X)
+            new_yv.append(y)
+            # rotate + reflect
+            X_, _ = self.reflect(X, 0)
+            new_Xv.append(X_)
+            new_yv.append(y)
+            # rotate x2
+            X, _ = self.rotate(X, 0)
+            new_Xv.append(X)
+            new_yv.append(y)
+            # rotate x2 + reflect
+            X_, _ = self.reflect(X, 0)
+            new_Xv.append(X_)
+            new_yv.append(y)
+            # rotate x3
+            X, _ = self.rotate(X, 0)
+            new_Xv.append(X)
+            new_yv.append(y)
+            # rotate x3 + reflect
+            X_, _ = self.reflect(X, 0)
+            new_Xv.append(X_)
+            new_yv.append(y)
+        # Augment Policy network
+        new_Xp, new_yp = Xp[:], yp[:]
+        for X, y in zip(Xp, yp):
+            # reflect
+            X_, y_ = self.reflect(X, y)
+            new_Xp.append(X_)
+            new_yp.append(y_)
+            # rotate
+            X, y = self.rotate(X, y)
+            new_Xp.append(X)
+            new_yp.append(y)
+            # rotate + reflect
+            X_, y_ = self.reflect(X, y)
+            new_Xp.append(X_)
+            new_yp.append(y_)
+            # rotate x2
+            X, y = self.rotate(X, y)
+            new_Xp.append(X)
+            new_yp.append(y)
+            # rotate x2 + reflect
+            X_, y_ = self.reflect(X, y)
+            new_Xp.append(X_)
+            new_yp.append(y_)
+            # rotate x3
+            X, y = self.rotate(X, y)
+            new_Xp.append(X)
+            new_yp.append(y)
+            # rotate x3 + reflect
+            X_, y_ = self.reflect(X, y)
+            new_Xp.append(X_)
+            new_yp.append(y_)
+        return new_Xv, new_yv, new_Xp, new_yp
+
+    def rotate(self, X, y):
+        """rotate Xv or Xp right 90 degrees"""
+        X_ = [X[6], X[3], X[0], X[7], X[4], X[1], X[8], X[5], X[2], X[9]]
+        y_ = [2, 5, 8, 1, 4, 7, 0, 3, 6][y]
+        return X_, y_
+    
+    def reflect(self, X, y):
+        """reflect Xv or Xp along the veritcal line of symmetry"""
+        X_ = [X[2], X[1], X[0], X[5], X[4], X[3], X[8], X[7], X[6], X[9]]
+        y_ = [2, 1, 0, 5, 4, 3, 8, 7, 6][y]
+        return X_, y_
 
     def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, early_stopping=None, num_epochs=1):
         """self-play n games to generate training data, then refit NNs
