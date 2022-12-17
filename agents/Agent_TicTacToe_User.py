@@ -1,5 +1,4 @@
 from agents.Agent_TicTacToe import Agent_TicTacToe
-from copy import deepcopy
 from games.TicTacToe import TicTacToe
 
 

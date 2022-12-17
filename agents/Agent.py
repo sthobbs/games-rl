@@ -25,7 +25,7 @@ class Agent():
     # TODO?: parallelize this
     # TODO?: might move this out of the agent class
     def gen_data(self, n, agents, game=TicTacToe, player=None, return_results=False, pprint=False, 
-                 datapoints_per_game=1, verbose=True):
+                 datapoints_per_game=1, verbose=True, one_hot=True):
         """Generate training data (with n data points) for two models, with n self-play games
             - One model outputs P(win),
             - The other predicts the next move
@@ -45,12 +45,20 @@ class Agent():
                 # add to datasets
                 x = state + [turn]
                 # set value network response
-                if turn == winner: # win
-                    yv = 1 # [0, 0, 1]
-                elif winner == -1: # tie
-                    yv = 0 # [0, 1, 0]
-                else: # loss
-                    yv = -1 # [1, 0, 0]
+                if one_hot:
+                    if turn == winner: # win
+                        yv = [0, 0, 1]
+                    elif winner == -1: # tie
+                        yv = [0, 1, 0]
+                    else: # loss
+                        yv = [1, 0, 0]                
+                else:
+                    if turn == winner: # win
+                        yv = 1 # [0, 0, 1]
+                    elif winner == -1: # tie
+                        yv = 0 # [0, 1, 0]
+                    else: # loss
+                        yv = -1 # [1, 0, 0]
                 if move: # there is only a next move if terminal game state is not picked as the datapoint
                     yp = move # policy network response
                     Xp.append(x)
