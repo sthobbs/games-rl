@@ -11,7 +11,6 @@ class TicTacToe(Game):
                           [' ', ' ', ' ']] # 1 => agent 1 played there
         else:
             self.state = state
-        self.agents = agents
         super().__init__(self.state, agents, *args, **kwargs)
 
     def result(self):

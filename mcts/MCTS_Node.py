@@ -62,8 +62,7 @@ class MCTS_Node():
         """return move based on which child node has the most visits n."""
         if self.tau: # randomly pick child with probabilities proportional to n**(1/tau)
             weights = [x.n ** (1 / self.tau) for x in self.children]
-            idx = random.choices(range(len(self.children)), weights=weights)[0]
-            child = self.children[idx]
+            child = random.choices(self.children, weights=weights)[0]
         else: # get child node with max number of visits n
             child = max(self.children, key=lambda x: x.n)
         move = child.last_move

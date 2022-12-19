@@ -9,6 +9,6 @@ class Agent_TicTacToe_Random(Agent_TicTacToe):
     def play_turn(self, state):
         """the Agent plays a turn, and returns the new game state, along with the move played"""
         valid = self.valid_moves(state) # get valid moves
-        move = valid[random.randrange(len(valid))] # get random valid move
+        move = random.choice(valid) # get random valid move
         state, move = self.play_move(state, move) # play move
         return state, move
