@@ -56,11 +56,15 @@ class Game():
             result = self.result()
             # print result and game state
             if pprint:
-                print(result)
                 try:
                     self.pretty_print()
                 except:
                     print(self.state)
+                if result is not None:
+                    if result == -1:
+                        print("tie game")
+                    else:
+                        print(f"player {result} wins")
             # check if game is over
             if result is not None:
                 break
