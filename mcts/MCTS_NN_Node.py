@@ -19,7 +19,7 @@ class MCTS_NN_Node(MCTS_Node):
         Q = (self.val_l_sum - self.val_w_sum) / self.n # (V(l) - V(w)) / n
         U = self.c * self.policy_predict(self.parent.state, self.parent.turn, self.last_move) * self.N**0.5 / (self.n + 1) # c * p * sqrt(N) / (n+1)        
         win_pct = 'N/A' if self.n == 1 else f"{round(100*self.w/(self.n-1), 2)}%"
-        return f"""state = {self.state}, move = {self.last_move}, win_rate = {win_pct}, w = {self.w}, t = {self.t}, n = {self.n-1}, action_value = {round(self.action_value(),8)}, turn = {self.turn},
+        return f"""state = {self.state}, move = {self.last_move}, win_rate = {win_pct}, w = {self.w}, t = {self.t}, n = {self.n-1}, action_value = {self.action_value()}, turn = {self.turn},
         val_w_sum = {self.val_w_sum}, val_l_sum = {self.val_l_sum}, val_t_sum = {self.val_t_sum},
         [P(loss), P(tie), P(win)] = {self.value_predict(self.state, self.turn)}, P(move) = {self.policy_predict(self.parent.state, self.parent.turn, self.last_move)}
         Q = {Q}, U = {U}
@@ -58,7 +58,7 @@ class MCTS_NN_Node(MCTS_Node):
         if result is not None: # then the game is over (i.e. I'm at a leaf), so go back up the tree updating values
             self.winner = result
             # swap order on win and loss since it's from the perspective of the next player (i.e. the one that didn't just end the game)
-            self.val_w, self.val_t, self.val_l = self.value_predict(self.state, self.turn) # value network prediction of leaf (or at max depth to be implemented) of simulation
+            self.val_l, self.val_t, self.val_w = self.value_predict(self.state, self.turn) # value network prediction of leaf (or at max depth to be implemented) of simulation
             self.traverse_up()
             return
         if self.n <= 5: # pick random child for the first x=5 simulations (so MCTS isn't deterministic)
