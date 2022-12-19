@@ -24,7 +24,8 @@ class Value(nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.softmax(self.fc3(x), dim=1)
+        # x = F.softmax(self.fc3(x), dim=1)
+        x = self.fc3(x)
         return x
 
 class Policy(nn.Module):
@@ -38,7 +39,8 @@ class Policy(nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.softmax(self.fc3(x), dim=1)
+        # x = F.softmax(self.fc3(x), dim=1)
+        x = self.fc3(x)
         return x
 
 
@@ -81,6 +83,11 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
 
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
+        # randomly permute data
+        idx = torch.randperm(X.shape[0])
+        X = X[idx].view(X.size())
+        y = y[idx].view(y.size())
+
         for X_chunk, y_chunk in self.iter_minibatches(X, y, batch_size=batch_size):
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -91,8 +98,10 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
             loss.backward()
             optimizer.step()
 
-    def fit_model(self, X_train, y_train, X_test, y_test, model, early_stopping=100, verbose=50, num_epochs=10):
+    def fit_model(self, X_train, y_train, X_test, y_test, model, early_stopping=None, verbose=10, num_epochs=10):
         """fit either value or policy network for num_epochs epochs.""" 
+        if early_stopping is None:
+            early_stopping = float("inf")
 
         for epoch in range(num_epochs):  # loop over the dataset multiple times
             # shuffle data
@@ -106,25 +115,52 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
             y_pred = model(X_test)
             y_true = y_test
             test_loss = criterion(y_pred, y_true).item()
-            print(f"[{epoch}] train log loss = {train_loss}, test log loss = {test_loss}")
+            if epoch % verbose == 0: # print metrics
+                print(f"[{epoch}] train log loss = {train_loss}, test log loss = {test_loss}")
+            # check best log loss so far
+            if epoch == 0:
+                min_log_loss = test_loss # lowest log loss so far
+                min_log_loss_train = train_loss # associated train log loss for lowest test log loss so far
+                min_log_loss_epoch = 0 # epoch with lowest test loss
+                min_log_loss_model = deepcopy(model) # model with lowest test loss
+            elif test_loss < min_log_loss:
+                min_log_loss = test_loss
+                min_log_loss_train = train_loss
+                min_log_loss_epoch = epoch
+                min_log_loss_model = deepcopy(model)
+            # early stopping
+            if epoch > min_log_loss_epoch + early_stopping:
+                break
+        print("optimal epoch:")
+        print(f"[{min_log_loss_epoch}] train log loss = {min_log_loss_train}, test log loss = {min_log_loss}")              
+        # copy optimal model to agent
+        assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
+        if model.name == 'value':
+            self.value = min_log_loss_model
+        elif model.name == 'policy':
+            self.policy = min_log_loss_model
         return
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
         """play n games against different opponents, randomly selected from ops,
         and generate data from these games for training/testing 
         """
+        # deepcopy agents to the original agent_idx's aren't changed
         ops = deepcopy(ops)
-        for op in ops:
-            op.agent_idx = 1
+        cur = deepcopy(self)
         Xv, yv, Xp, yp = [], [], [], []
-        for i in tqdm(range(n)):
+        for _ in tqdm(range(n)):
             op = random.choice(ops) # pick random opponent
             # randomly pick who goes first
             if random.random() < 0.5:
-                agents = [self, op]
+                cur.agent_idx = 0
+                op.agent_idx = 1
+                agents = [cur, op]
                 player = 0
             else:
-                agents = [op, self]
+                op.agent_idx = 0
+                cur.agent_idx = 1
+                agents = [op, cur]
                 player = 1
             Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player, datapoints_per_game=datapoints_per_game, verbose=False)
             Xv.extend(Xv_)
@@ -220,32 +256,27 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         y_ = [2, 1, 0, 5, 4, 3, 8, 7, 6][y]
         return X_, y_
 
-    def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, early_stopping=None, num_epochs=1):
+    def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, **kwargs):
         """self-play n games to generate training data, then refit NNs
         `datapoints_per_game` generate this many data points per game,
             although the policy network may have slightly less, because if the final game state
             is selected, it has no next move to predict.
         """
         
-        # # set oppopent as copy of current agent
-        # op = deepcopy(self)
-        # op.agent_idx = 1
-        # generate training and testing data independently to avoid leakage from multiple datapoints the from same game
+        # generate training and testing data from different games to avoid leakage
         assert 0 < test_size < 1, 'invalid test size'
         n_train = int((1 - test_size) * n)
         n_test = int(test_size * n)
         print('generating training data')
         Xv_train, yv_train, Xp_train, yp_train = self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
-        # Xv_train, yv_train, Xp_train, yp_train = self.gen_data(n_train, agents=[self, op], datapoints_per_game=datapoints_per_game)
         print('generating test data')
         Xv_test,  yv_test,  Xp_test,  yp_test  = self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
-        # Xv_test,  yv_test,  Xp_test,  yp_test  = self.gen_data(n_test,  agents=[self, op], datapoints_per_game=datapoints_per_game)
         # fit value network
         print('fitting value network')
-        self.fit_model(Xv_train, yv_train, Xv_test, yv_test, model=self.value, early_stopping=early_stopping, num_epochs=num_epochs)
+        self.fit_model(Xv_train, yv_train, Xv_test, yv_test, model=self.value, **kwargs)
         # fit policy network
         print('fitting policy network')
-        self.fit_model(Xp_train, yp_train, Xp_test, yp_test, model=self.policy, early_stopping=early_stopping, num_epochs=num_epochs)
+        self.fit_model(Xp_train, yp_train, Xp_test, yp_test, model=self.policy, **kwargs)
 
 
     def play_turn(self, state):
@@ -277,11 +308,11 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
         """Return output of value networks"""
         x = self.prep_data(state, turn)
         x = torch.FloatTensor(x)
-        return self.agent.value(x)[0]
+        return F.softmax(self.agent.value(x), dim=1)[0]
 
     def policy_predict(self, state, turn, move):
         """Return output of policy networks (for a specific move index)"""
         move_idx = TicTacToe(agents=[None, None]).move_index(move)
         x = self.prep_data(state, turn)
         x = torch.FloatTensor(x)
-        return self.agent.policy(x)[0][move_idx]
+        return F.softmax(self.agent.policy(x), dim=1)[0][move_idx]
