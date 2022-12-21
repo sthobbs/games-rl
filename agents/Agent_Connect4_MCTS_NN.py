@@ -65,6 +65,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         self.simulations = simulations # number of simulations for MCTS
         self.depth = depth
         self.verbose = verbose
+        self.learning_rate = 0.001
+        self.momentum = 0.9
         # set value network
         if value is None:
             self.value = Value() 
@@ -93,7 +95,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
     def fit_epoch(self, X1, X2, y, model, batch_size=32):
         """fit one epoch"""
 
-        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         
         # randomly permute data
         idx = torch.randperm(y.shape[0])
@@ -159,21 +161,14 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         """play n games against different opponents, randomly selected from ops,
         and generate data from these games for training/testing 
         """
-        # deepcopy agents so the original agent_idx's aren't changed
-        # ops = deepcopy(ops)
-        # cur = deepcopy(self)
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
             op = random.choice(ops) # pick random opponent
             # randomly pick who goes first
             if random.random() < 0.5:
-                # cur.agent_idx = 0
-                # op.agent_idx = 1
                 agents = [self, op]
                 player = 0
             else:
-                # op.agent_idx = 0
-                # cur.agent_idx = 1
                 agents = [op, self]
                 player = 1
             Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player, datapoints_per_game=datapoints_per_game, verbose=False)

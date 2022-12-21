@@ -56,6 +56,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         self.simulations = simulations # number of simulations for MCTS
         self.depth = depth
         self.verbose = verbose
+        self.learning_rate = 0.001
+        self.momentum = 0.9
         # set value network
         if value is None:
             self.value = Value() 
@@ -83,7 +85,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     def fit_epoch(self, X, y, model, batch_size=32):
         """fit one epoch"""
 
-        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
 
         # randomly permute data
         idx = torch.randperm(X.shape[0])
