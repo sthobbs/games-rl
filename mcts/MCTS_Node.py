@@ -77,12 +77,12 @@ class MCTS_Node():
         for child in self.children:
             print(child)
 
-    def set_children(self):
+    def set_children(self, **kwargs):
         """instantiate child nodes for each possible valid next move"""
         moves = self.valid_moves()
         for move in moves:
             new_state, _ = self.play_move(move)
-            self.children.append(self.__class__(state=new_state, parent=self, last_move=move, *self.args, **self.kwargs))
+            self.children.append(self.__class__(state=new_state, parent=self, last_move=move, *self.args, **self.kwargs, **kwargs))
 
     def action_value(self):
         """get action value for current node."""

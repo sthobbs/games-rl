@@ -17,6 +17,3 @@ class MCTS_Connect4_methods():
             Return -1 if the game is over and there is no winner (i.e. a tie).
         """
         return Connect4(agents=[None, None], state=self.state).result()
-
-
-

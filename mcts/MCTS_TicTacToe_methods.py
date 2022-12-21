@@ -17,6 +17,3 @@ class MCTS_TicTacToe_methods():
             Return -1 if the game is over and there is no winner (i.e. a tie).
         """
         return TicTacToe(agents=[None, None], state=self.state).result()
-
-
-
