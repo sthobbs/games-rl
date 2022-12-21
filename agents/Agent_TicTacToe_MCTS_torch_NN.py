@@ -2,6 +2,7 @@ from agents.Agent_TicTacToe import Agent_TicTacToe
 from mcts.MCTS_NN_Node import MCTS_NN_Node
 from mcts.MCTS_TicTacToe_methods import MCTS_TicTacToe_methods
 from games.TicTacToe import TicTacToe
+from games.Game import Game
 from copy import deepcopy
 from tqdm import tqdm
 import random
@@ -50,9 +51,10 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         - a value network that estimates P(win), and
         - a value network that predicts next move
     """
-    def __init__(self, agent_idx=None, simulations=1000, verbose=False, value=None, policy=None):
+    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False, value=None, policy=None):
         super().__init__(agent_idx)        
         self.simulations = simulations # number of simulations for MCTS
+        self.depth = depth
         self.verbose = verbose
         # set value network
         if value is None:
@@ -145,7 +147,7 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         """play n games against different opponents, randomly selected from ops,
         and generate data from these games for training/testing 
         """
-        # deepcopy agents to the original agent_idx's aren't changed
+        # deepcopy agents so the original agent_idx's aren't changed
         ops = deepcopy(ops)
         cur = deepcopy(self)
         Xv, yv, Xp, yp = [], [], [], []
@@ -184,31 +186,31 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         new_Xv, new_yv = Xv[:], yv[:]
         for X, y in zip(Xv, yv):
             # reflect
-            X_, _ = self.reflect(X, 0)
+            X_, _ = self.reflect(X)
             new_Xv.append(X_)
             new_yv.append(y)
             # rotate
-            X, _ = self.rotate(X, 0)
+            X, _ = self.rotate(X)
             new_Xv.append(X)
             new_yv.append(y)
             # rotate + reflect
-            X_, _ = self.reflect(X, 0)
+            X_, _ = self.reflect(X)
             new_Xv.append(X_)
             new_yv.append(y)
             # rotate x2
-            X, _ = self.rotate(X, 0)
+            X, _ = self.rotate(X)
             new_Xv.append(X)
             new_yv.append(y)
             # rotate x2 + reflect
-            X_, _ = self.reflect(X, 0)
+            X_, _ = self.reflect(X)
             new_Xv.append(X_)
             new_yv.append(y)
             # rotate x3
-            X, _ = self.rotate(X, 0)
+            X, _ = self.rotate(X)
             new_Xv.append(X)
             new_yv.append(y)
             # rotate x3 + reflect
-            X_, _ = self.reflect(X, 0)
+            X_, _ = self.reflect(X)
             new_Xv.append(X_)
             new_yv.append(y)
         # Augment Policy network
@@ -244,14 +246,14 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
             new_yp.append(y_)
         return new_Xv, new_yv, new_Xp, new_yp
 
-    def rotate(self, X, y):
-        """rotate Xv or Xp right 90 degrees"""
+    def rotate(self, X, y=0):
+        """rotate Xv (or Xp) and yp right 90 degrees"""
         X_ = [X[6], X[3], X[0], X[7], X[4], X[1], X[8], X[5], X[2], X[9]]
         y_ = [2, 5, 8, 1, 4, 7, 0, 3, 6][y]
         return X_, y_
     
-    def reflect(self, X, y):
-        """reflect Xv or Xp along the veritcal line of symmetry"""
+    def reflect(self, X, y=0):
+        """reflect Xv (or Xp) and yp along the veritcal line of symmetry"""
         X_ = [X[2], X[1], X[0], X[5], X[4], X[3], X[8], X[7], X[6], X[9]]
         y_ = [2, 1, 0, 5, 4, 3, 8, 7, 6][y]
         return X_, y_
@@ -278,10 +280,9 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         print('fitting policy network')
         self.fit_model(Xp_train, yp_train, Xp_test, yp_test, model=self.policy, **kwargs)
 
-
     def play_turn(self, state):
         """the Agent plays a turn, and returns the new game state, along with the move played"""
-        mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx)
+        mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
         mcts.simulations(self.simulations) # play simulations
         move = mcts.best_move(verbose=self.verbose) # find best most
         state, move = self.play_move(state, move) # play move
@@ -304,15 +305,22 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
             ).play_move(self.state, move, deepcopy_state=True)
         return state, move
 
-    def value_predict(self, state, turn):
+    def value_predict(self):
         """Return output of value networks"""
-        x = self.prep_data(state, turn)
-        x = torch.FloatTensor(x)
+        x = self.prep_data(self.state, self.turn)
         return F.softmax(self.agent.value(x), dim=1)[0]
 
-    def policy_predict(self, state, turn, move):
-        """Return output of policy networks (for a specific move index)"""
-        move_idx = TicTacToe(agents=[None, None]).move_index(move)
-        x = self.prep_data(state, turn)
-        x = torch.FloatTensor(x)
+    def policy_predict(self):
+        """Return output of policy networks for the parent's state,
+        parent's turn, and last move played"""
+        move_idx = TicTacToe.move_index(self.last_move)
+        x = self.prep_data(self.parent.state, self.parent.turn)
         return F.softmax(self.agent.policy(x), dim=1)[0][move_idx]
+
+    def prep_data(self, state, turn):
+        """prepare input for policy or value network (it's the same input)"""
+        state = Game.replace_2d(state)
+        state = Game.flatten_state(state)
+        x = state + [turn]
+        x = torch.FloatTensor([x])
+        return x
