@@ -46,7 +46,7 @@ class Policy(nn.Module):
 
 
 
-class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
+class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     """Agent that plays tic-tac-toe moves based on Monte Carlo Tree Search as well as 2 neural networks.
         - a value network that estimates P(win), and
         - a value network that predicts next move
@@ -147,9 +147,6 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         """play n games against different opponents, randomly selected from ops,
         and generate data from these games for training/testing 
         """
-        # deepcopy agents so the original agent_idx's aren't changed
-        # ops = deepcopy(ops)
-        # cur = deepcopy(self)
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
             op = random.choice(ops) # pick random opponent
@@ -294,7 +291,7 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
 
     def play_move(self, move):
         """play a specific move, returning the new game state (and the move played)."""
-        state, move = Agent_TicTacToe_MCTS_torch_NN(
+        state, move = Agent_TicTacToe_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
             policy=self.agent.policy 
