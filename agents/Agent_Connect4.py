@@ -1,11 +1,13 @@
 from copy import deepcopy
 from agents.Agent import Agent
+from games.Connect4 import Connect4
 
 
 class Agent_Connect4(Agent):
     """Agents plays Connect 4"""
     def __init__(self, agent_idx=None):
         super().__init__(agent_idx)
+        self.game = Connect4
     
     def valid_moves(self, state):
         valid = []

@@ -105,33 +105,25 @@ class Connect4(Game):
         print(f"| {self.state[4][0]} | {self.state[4][1]} | {self.state[4][2]} | {self.state[4][3]} | {self.state[4][4]} | {self.state[4][5]} | {self.state[4][6]} |")
         print(f"| {self.state[5][0]} | {self.state[5][1]} | {self.state[5][2]} | {self.state[5][3]} | {self.state[5][4]} | {self.state[5][5]} | {self.state[5][6]} |")
 
-    # TODO: might try to remove this, or seperate the one-hot encoding and use the method in Game for state flattening
-    def flatten(self, state, move):
-        """flatten state into a 1d list, replace ' 's, and one-hot encode move."""
-        state = list(itertools.chain.from_iterable(state)) # flatten 2d list
-        state = [-1 if i == ' ' else i for i in state]
-        if move is None:
-            return state, move
-        move_idx = 7 * move[0] + move[1]
-        return state, move_idx
+    @staticmethod
+    def move_index(move):
+        """get index of move from tuple"""
+        return move[1]    
 
-    def move_index(self, move):
-        """get index of move if state was flattened"""
-        move_idx = 7 * move[0] + move[1]
-        return move_idx    
-
-    def get_data_point(self, flatten=True, **kwargs):
+    def get_data_point(self, process=True, **kwargs):
         """
         grab a random game state, and output the tuple (state, turn, move, winner)
             `state` is the current game state
             `turn` is the index of the agent that plays next
             `move` is the move the next player will make
             `winner` is the index of the agent that won, or -1 if the game was a tie.
-            `flatten` = True => flatten state to a 1d list, replace " "s, and one-hot encode move, so these can be used as input to NN training
+            `process` = True => replace " "s, and ordinal encode move, so these can be used as input to NN training
         this will be used to generate training data.
         """
         state, turn, move, winner = super().get_data_point(**kwargs)
-        if flatten:
-            state, move = self.flatten(state, move)
+        if process:
+            state = self.replace_2d(state)
+            if move is not None:
+                move = self.move_index(move)
         return state, turn, move, winner
 

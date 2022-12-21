@@ -5,7 +5,7 @@ from copy import deepcopy
 
 
 class Game():
-    
+
     def __init__(self, state, agents, turn=0, store_states=False):
         """
         state: game state (e.g. 3x3 array)
@@ -98,10 +98,18 @@ class Game():
             _, turn, move = self.states[idx+1]
         return state, turn, move, self.winner
 
-    def flatten_state(self, replace={' ': -1}):
-        """flatten state into a 1d list, replace ' 's"""
-        state = list(itertools.chain.from_iterable(self.state)) # flatten 2d list
+    @staticmethod
+    def flatten_state(state):
+        """flatten state into a 1d list"""
+        state = list(itertools.chain.from_iterable(state)) # flatten 2d list
+        return state
+
+    @staticmethod
+    def replace_2d(state, replace={' ': -1}, copy=True):
+        if copy:
+            state = deepcopy(state)
         for i in range(len(state)):
-            if state[i] in replace.keys():
-                state[i] = replace[state[i]]
+            for j in range(len(state[i])):
+                if state[i][j] in replace.keys():
+                    state[i][j] = replace[state[i][j]]
         return state

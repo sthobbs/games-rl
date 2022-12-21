@@ -8,11 +8,17 @@ class Agent():
     
     def __init__(self, agent_idx):
         self.agent_idx = agent_idx # the agent index (which often specifies how they mark the game state)
-    
+        self.game = TicTacToe
+
     @abc.abstractmethod
     def play_turn(self, state):
         """the Agent plays a turn, and returns the new game state, along with the move played"""
         ...
+
+    def format_X_datapoint(self, state, turn):
+        """format Xv (which is the sme as Xp) datapoint as a list of model inputs.
+        Overwrite this in subclasses for different formats"""
+        return state + [turn]
 
     def to_pickle(self, path):
         with open(path, 'wb') as f:
@@ -24,7 +30,7 @@ class Agent():
 
     # TODO?: parallelize this
     # TODO?: might move this out of the agent class
-    def gen_data(self, n, agents, game=TicTacToe, player=None, return_results=False, pprint=False, 
+    def gen_data(self, n, agents, player=None, return_results=False, pprint=False, 
                  datapoints_per_game=1, verbose=True, one_hot=True):
         """Generate training data (with n data points) for two models, with n self-play games
             - One model outputs P(win),
@@ -36,14 +42,14 @@ class Agent():
         Xv, Yv, Xp, Yp = [], [], [], []
         for _ in tqdm(range(n), disable=(not verbose)):
             # set up game
-            g = game(agents, store_states=True)
+            g = self.game(agents, store_states=True)
             # play game
             g.play_game(pprint=pprint)
             # get random position from game, and the game result (i.e. which agent won, or draw)
             for _ in range(datapoints_per_game):
                 state, turn, move, winner = g.get_data_point(player=player)
                 # add to datasets
-                x = state + [turn]
+                x = self.format_X_datapoint(state, turn)
                 # set value network response
                 if one_hot:
                     if turn == winner: # win

@@ -1,11 +1,13 @@
 from copy import deepcopy
 from agents.Agent import Agent
+from games.TicTacToe import TicTacToe
 
 
 class Agent_TicTacToe(Agent):
     """Agents plays tic-tac-toe"""
     def __init__(self, agent_idx=None):
         super().__init__(agent_idx)
+        self.game = TicTacToe
     
     def valid_moves(self, state):
         valid = []
