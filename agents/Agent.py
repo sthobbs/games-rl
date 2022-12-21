@@ -37,7 +37,10 @@ class Agent():
             - The other predicts the next move
         `player` index of agent which we are generating data for.
             if None, data is picked randomly from all players
-        """ 
+        """
+        # set agent indexes
+        for i, agent in enumerate(agents):
+            agent.agent_idx = i
         twl = [0, 0, 0] # tie-win-loss count for agents[0]
         Xv, Yv, Xp, Yp = [], [], [], []
         for _ in tqdm(range(n), disable=(not verbose)):
@@ -76,6 +79,9 @@ class Agent():
         if return_results:
             return twl
         if verbose:
-            results = f"wins = {twl[1]}, ties = {twl[0]}, losses = {twl[2]}"
+            if self.agent_idx == 0:
+                results = f"wins = {twl[1]}, ties = {twl[0]}, losses = {twl[2]}"
+            else:
+                results = f"wins = {twl[2]}, ties = {twl[0]}, losses = {twl[1]}"
             print(results)
         return Xv, Yv, Xp, Yp

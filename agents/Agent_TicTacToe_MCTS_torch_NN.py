@@ -148,21 +148,17 @@ class Agent_TicTacToe_MCTS_torch_NN(Agent_TicTacToe):
         and generate data from these games for training/testing 
         """
         # deepcopy agents so the original agent_idx's aren't changed
-        ops = deepcopy(ops)
-        cur = deepcopy(self)
+        # ops = deepcopy(ops)
+        # cur = deepcopy(self)
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
             op = random.choice(ops) # pick random opponent
             # randomly pick who goes first
             if random.random() < 0.5:
-                cur.agent_idx = 0
-                op.agent_idx = 1
-                agents = [cur, op]
+                agents = [self, op]
                 player = 0
             else:
-                op.agent_idx = 0
-                cur.agent_idx = 1
-                agents = [op, cur]
+                agents = [op, self]
                 player = 1
             Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player, datapoints_per_game=datapoints_per_game, verbose=False)
             Xv.extend(Xv_)
