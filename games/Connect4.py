@@ -1,32 +1,54 @@
-import itertools
 from games.Game import Game
 
 
 class Connect4(Game):
+    """Connect4 game class."""
+
     def __init__(self, agents, state=None, *args, **kwargs):
+        """
+        Initialize the game state.
+
+        Parameters
+        ----------
+        agents : list of Agent
+            List of agents playing the game.
+        state : list of list of str (optional)
+            Game state. If None, initialize to empty board.
+        turn : int (optional)
+            Index (starting at 0) of agent whose turn it is
+        store_states : bool (optional)
+            If True, keep a sequence of all (state, turn, last_move) tuples
+                Where turn is the player who just played.
+                This can be used to generate training data.
+        """
         assert len(agents) == 2, f'There should be 2 agents, but there are {len(agents)}.'
         if state is None:
             self.state = [[' ', ' ', ' ', ' ', ' ', ' ', ' '], # ' ' => empty
                           [' ', ' ', ' ', ' ', ' ', ' ', ' '], # 0 => agent 0 played there
+                          [' ', ' ', ' ', ' ', ' ', ' ', ' '], # 1 => agent 1 played there
                           [' ', ' ', ' ', ' ', ' ', ' ', ' '],
                           [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                          [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                          [' ', ' ', ' ', ' ', ' ', ' ', ' ']] # 1 => agent 1 played there
+                          [' ', ' ', ' ', ' ', ' ', ' ', ' ']] 
         else:
             self.state = state
         super().__init__(self.state, agents, *args, **kwargs)
 
     def result(self):
         """
-        Detmine the winner of the game:
-            Return agent index (i.e. `turn`) of winning player if a player has won.
-            Return None the game is not over.
-            Return -1 if the game is over and there is no winner (i.e. a tie).
+        Determine the winner of the game.
+
+        Return
+        ------
+        None if the game is not over.
+        -1 if the game is over and there is no winner (i.e. a tie).
+        agent index (i.e. `turn`) of winning player if a player has won.
         """
-        # check for winner
-        # assume the top move in one of the columns is part of the connect 4 (if it exists)
+        # TODO: could optimize by only checking the last move
+        # check for winner 
         for col in range(7):
-            # set row to be the index of the top move in column col (TODO: could optimize by starting from bottom)
+            # set row to be the index of the top move in column col
+            # (assume the top move in one of the columns is part of the connect 4 (if it exists))
+            # TODO: probably slightly faster to start from bottom
             row = 0
             while row < 6 and self.state[row][col] == ' ':
                 row += 1
@@ -96,29 +118,46 @@ class Connect4(Game):
         return -1
 
     def pretty_print(self):
-        """print game state in human-readable format."""
-        print("\n  1   2   3   4   5   6   7  ")
-        print(f"| {self.state[0][0]} | {self.state[0][1]} | {self.state[0][2]} | {self.state[0][3]} | {self.state[0][4]} | {self.state[0][5]} | {self.state[0][6]} |")
-        print(f"| {self.state[1][0]} | {self.state[1][1]} | {self.state[1][2]} | {self.state[1][3]} | {self.state[1][4]} | {self.state[1][5]} | {self.state[1][6]} |")
-        print(f"| {self.state[2][0]} | {self.state[2][1]} | {self.state[2][2]} | {self.state[2][3]} | {self.state[2][4]} | {self.state[2][5]} | {self.state[2][6]} |")
-        print(f"| {self.state[3][0]} | {self.state[3][1]} | {self.state[3][2]} | {self.state[3][3]} | {self.state[3][4]} | {self.state[3][5]} | {self.state[3][6]} |")
-        print(f"| {self.state[4][0]} | {self.state[4][1]} | {self.state[4][2]} | {self.state[4][3]} | {self.state[4][4]} | {self.state[4][5]} | {self.state[4][6]} |")
-        print(f"| {self.state[5][0]} | {self.state[5][1]} | {self.state[5][2]} | {self.state[5][3]} | {self.state[5][4]} | {self.state[5][5]} | {self.state[5][6]} |")
+        """Print game state in human-readable format."""
+        print("\n  1   2   3   4   5   6   7  ") # column numbers for human readability
+        for row in self.state:
+            print(f"| {' | '.join(str(v) for v in row)} |")
 
     @staticmethod
     def move_index(move):
-        """get index of move from tuple"""
+        """
+        Get column index of move from tuple.
+        
+        Parameters
+        ----------
+        move : tuple
+            Move to get column index of.
+        """
         return move[1]    
 
     def get_data_point(self, process=True, **kwargs):
         """
-        grab a random game state, and output the tuple (state, turn, move, winner)
-            `state` is the current game state
-            `turn` is the index of the agent that plays next
-            `move` is the move the next player will make
-            `winner` is the index of the agent that won, or -1 if the game was a tie.
-            `process` = True => replace " "s, and ordinal encode move, so these can be used as input to NN training
-        this will be used to generate training data.
+        Get a random game state and the next move. This can be used to generate training data.
+
+        Parameters
+        ----------
+        process : bool
+            If True, replace " "s with -1s, and ordinal encode move, so these can be
+            used as input to NN training.
+        player : int or None
+            Can be set to the index of the agent from whom you want to pick a random move from.
+            If None, pick a random state from any player
+
+        Returns
+        -------
+        state : list
+            Game state (e.g. 3x3 array for tic tac toe)
+        turn : int
+            Index (starting at 0) of agent whose turn it is
+        move : tuple
+            Move the next player will make, (None if it's the terminal game state)
+        winner : int
+            Index of the agent that won, or -1 if the game was a tie.
         """
         state, turn, move, winner = super().get_data_point(**kwargs)
         if process:
@@ -126,4 +165,3 @@ class Connect4(Game):
             if move is not None:
                 move = self.move_index(move)
         return state, turn, move, winner
-
