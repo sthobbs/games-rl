@@ -1,12 +1,22 @@
 import abc
 import random
 from mcts.MCTS_Node import MCTS_Node
-from games.Game import Game
 
 
 class MCTS_NN_Node(MCTS_Node):
-    """Node for Monte Carlo Tree Search that uses Neural Networks for action values"""
+    """Node for Monte Carlo Tree Search that uses Neural Networks to guide the search."""
+    
     def __init__(self, state, depth=None, *args, **kwargs):
+        """
+        Initialize node.
+        
+        Parameters
+        ----------
+        state : any
+            Game state representation
+        depth : int
+            Search depth for MCTS
+        """
         super().__init__(state, *args, **kwargs)
         self.val_w_sum = 0 # sum of P(win) value network predictions of terminal nodes
         self.val_t_sum = 0 # sum of P(tie) value network predictions of terminal nodes
@@ -17,6 +27,7 @@ class MCTS_NN_Node(MCTS_Node):
         self.winner = None # index of agent who won the game (-1 => tie, None => game not over)
 
     def __str__(self):
+        """MCTS Node details, primarily for debugging."""
         self.N = self.parent.n
         Q = (self.val_l_sum - self.val_w_sum) / self.n # (V(l) - V(w)) / n
         U = self.c * self.policy_predict() * self.N**0.5 / (self.n + 1) # c * p * sqrt(N) / (n+1)        
@@ -30,43 +41,48 @@ class MCTS_NN_Node(MCTS_Node):
     @abc.abstractmethod
     def value_predict(self):
         """Return output of value networks based on the current state and turn"""
-        ...
 
     @abc.abstractmethod
     def policy_predict(self):
         """Return output of policy networks for the parent's state,
         parent's turn, and last move played"""
-        ...
 
     def action_value(self):
-        """get action value for current node."""
+        """Get action value for current node."""
         self.N = self.parent.n
         Q = (self.val_l_sum - self.val_w_sum) / self.n # L - W since it's from the opponent's perspective
         U = self.c * self.policy_predict() * self.N**0.5 / (self.n + 1) # c * p * sqrt(N) / (n+1)
         return Q + U
 
     def traverse_down(self):
-        """traverse down the tree, picking optimal child nodes."""
-        if not self.children: # if children is empty, try setting them
+        """Traverse down the tree, picking optimal child nodes."""
+        # if children is empty, try setting them
+        if not self.children:
             depth = None if self.depth is None else self.depth - 1
             self.set_children(depth=depth)
+        # get game status (including if game is not over)
         result = self.game_result()
         assert self.children or result is not None, "game isn't over, but there are no child nodes"
-        if result is not None: # then the game is over (i.e. I'm at a leaf)
+        # if game is over, set winner
+        if result is not None:
             self.winner = result
-        if result is not None or self.depth == 1: # then the game is over (i.e. I'm at a leaf) or I'm at max_depth, so go back up the tree updating values
-            # swap order on win and loss since it's from the perspective of the next player (i.e. the one that didn't just end the game)
-            self.val_l, self.val_t, self.val_w = self.value_predict() # value network prediction of leaf (or at max depth to be implemented) of simulation
+        # if game is over or at max depth, update values and go back up the tree
+        if result is not None or self.depth == 1:
+            # get value network predictions of final position in simulation
+            self.val_l, self.val_t, self.val_w = self.value_predict()
             self.traverse_up()
             return
-        if self.n <= 5: # pick random child for the first x=5 simulations (so MCTS isn't deterministic)
-            child = self.children[random.randrange(len(self.children))] # get random child
-        else: # there are children:
-            child = self.max_action_child() # find optimal child based on action values
+        # pick random child for the first 10 simulations
+        if self.n <= 10:
+            child = random.choice(self.children)
+        # find optimal child based on action values
+        else:
+            child = self.max_action_child()
+        # recursively traverse down the tree
         child.traverse_down()
 
     def traverse_up(self):
-        """traverse up the tree, updating counts."""
+        """Traverse up the tree, updating counts."""
         if self.winner == self.turn:
             self.w += 1 # increment num wins
         elif self.winner == -1:

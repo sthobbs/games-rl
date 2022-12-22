@@ -3,17 +3,20 @@ from games.TicTacToe import TicTacToe
 
 
 class MCTS_TicTacToe_methods():
-    """Tic Tac Toe game specific methods for Monte Carlo Tree Search Node"""
+    """Tic Tac Toe game specific methods for Monte Carlo Tree Search Node."""
 
     def valid_moves(self):
-        """return a list of valid next moves for a given game state"""
+        """Return a list of valid next moves for a given game state."""
         return Agent_TicTacToe().valid_moves(self.state)
     
     def game_result(self):
-        """ 
-        Detmine the winner of the game:
-            Return agent index of winning player if a player has won.
-            Return None the game is not over.
-            Return -1 if the game is over and there is no winner (i.e. a tie).
+        """
+        Determine the winner of the game.
+
+        Return
+        ------
+        None if the game is not over.
+        -1 if the game is over and there is no winner (i.e. a tie).
+        agent index (i.e. `turn`) of winning player if a player has won.
         """
         return TicTacToe(agents=[None, None], state=self.state).result()
