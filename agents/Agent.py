@@ -6,29 +6,29 @@ from games.TicTacToe import TicTacToe
 
 class Agent():
     """Abstract class for Agents to play games."""
-    
+
     def __init__(self, agent_idx):
         """
         Initialize the Agent with an agent index.
-        
+
         Parameters
         ----------
         agent_idx : int
-            the agent index (which often specifies how they mark the game state).
+            the agent index (which often specifies how to mark the game state).
         """
-        self.agent_idx = agent_idx # the agent index (which often specifies how they mark the game state)
+        self.agent_idx = agent_idx
         self.game = TicTacToe
 
     @abc.abstractmethod
     def play_turn(self, state):
         """
         the Agent plays a turn, and returns the new game state, along with the move played
-        
+
         Parameters
         ----------
         state : any
             the current game state
-            
+
         Returns
         -------
         state : any
@@ -53,7 +53,7 @@ class Agent():
     def to_pickle(self, path):
         """
         Save the agent to a pickle file.
-        
+
         Parameters
         ----------
         path : str
@@ -64,15 +64,15 @@ class Agent():
 
     def from_pickle(self, path):
         """
-        Load the agent from a pickle file.
-        
+        Load the agent from a pickle file into the current instance.
+
         Parameters
         ----------
         path : str
             the path to load the pickle file from
         """
         with open(path) as f:
-            self = pickle.load(f)
+            self.__dict__ = pickle.load(f).__dict__
 
     # TODO?: parallelize this
     # TODO?: might move this out of the agent class
@@ -113,35 +113,36 @@ class Agent():
         # set agent indexes
         for i, agent in enumerate(agents):
             agent.agent_idx = i
-        twl = [0, 0, 0] # tie-win-loss count for agents[0]
+        twl = [0, 0, 0]  # tie-win-loss count for agents[0]
         Xv, Yv, Xp, Yp = [], [], [], []
         for _ in tqdm(range(n), disable=(not verbose)):
             # set up game
             g = self.game(agents, store_states=True)
             # play game
             g.play_game(pprint=False)
-            # get random position from game, and the game result (i.e. which agent won, or draw)
+            # get random position from game, and result (i.e. which agent won, or draw)
             for _ in range(datapoints_per_game):
                 state, turn, move, winner = g.get_data_point(player=player)
                 # add to datasets
                 x = self.format_X_datapoint(state, turn)
                 # set value network response
                 if one_hot:
-                    if turn == winner: # win
+                    if turn == winner:  # win
                         yv = [0, 0, 1]
-                    elif winner == -1: # tie
+                    elif winner == -1:  # tie
                         yv = [0, 1, 0]
-                    else: # loss
-                        yv = [1, 0, 0]                
+                    else:  # loss
+                        yv = [1, 0, 0]
                 else:
-                    if turn == winner: # win
-                        yv = 1 # [0, 0, 1]
-                    elif winner == -1: # tie
-                        yv = 0 # [0, 1, 0]
-                    else: # loss
-                        yv = -1 # [1, 0, 0]
-                if move: # there is only a next move if terminal game state is not picked as the datapoint
-                    yp = move # policy network response
+                    if turn == winner:  # win
+                        yv = 1
+                    elif winner == -1:  # tie
+                        yv = 0
+                    else:  # loss
+                        yv = -1
+                # if there is a next move (i.e. not at the terminal game state)
+                if move:
+                    yp = move
                     Xp.append(x)
                     Yp.append(yp)
                 Xv.append(x)

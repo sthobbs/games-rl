@@ -9,25 +9,25 @@ class Agent_TicTacToe_MCTS(Agent_TicTacToe):
     def __init__(self, agent_idx=None, simulations=1000, verbose=False):
         """
         Initialize the Agent
-        
+
         Parameters
         ----------
         agent_idx : int
-            the agent index (which often specifies how they mark the game state).
+            the agent index (which often specifies how to mark the game state).
         simulations : int
             the number of simulations to run for MCTS.
         verbose : bool
             whether to print debugging information.
         """
         super().__init__(agent_idx)
-        self.simulations = simulations # number of simulations for MCTS
-        self.verbose = verbose # set to True for debugging
+        self.simulations = simulations  # number of simulations for MCTS
+        self.verbose = verbose  # set to True for debugging
 
     def play_turn(self, state):
         """
         The Agent plays a turn, based on MCTS, and returns the new game state,
         along with the move played
-        
+
         Parameters
         ----------
         state : list of list of str
@@ -39,7 +39,7 @@ class Agent_TicTacToe_MCTS(Agent_TicTacToe):
         # find best most
         move = mcts.best_move(verbose=self.verbose)
         # play move
-        state = self.play_move(state, move) 
+        state = self.play_move(state, move)
         return state, move
 
 
@@ -49,11 +49,12 @@ class TicTacToe_MCTS_Node(MCTS_TicTacToe_methods, MCTS_Node):
     def play_move(self, move):
         """
         play a specific move, returning the new game state.
-        
+
         Parameters
         ----------
         move : tuple of int
             the move to play
         """
-        state = Agent_TicTacToe_MCTS(self.turn).play_move(self.state, move, deepcopy_state=True)
+        state = Agent_TicTacToe_MCTS(self.turn).play_move(
+            self.state, move, deepcopy_state=True)
         return state

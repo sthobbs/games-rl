@@ -20,17 +20,17 @@ class Value(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 120, 4) # grid size: 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
-        self.conv2 = nn.Conv2d(120, 5, 2) # grid size: 3x4x120 -> 2x3x5 ((2x2x120+1) x 5 parameters)
-        self.flatten = nn.Flatten()        
+        self.conv1 = nn.Conv2d(1, 120, 4)  # 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
+        self.conv2 = nn.Conv2d(120, 5, 2)  # 3x4x120 -> 2x3x5 ((2x2x120+1) x 5 parameters)
+        self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(31, 20)
-        self.fc2 = nn.Linear(20, 3) # output loss, tie, win probabilities
-    
+        self.fc2 = nn.Linear(20, 3)  # output loss, tie, win probabilities
+
     def forward(self, state, turn):
         x = F.relu(self.conv1(state))
         x = F.relu(self.conv2(x))
         x = self.flatten(x)
-        x = torch.cat((x, turn), dim=1) # concatenate conv output and turn
+        x = torch.cat((x, turn), dim=1)  # concatenate conv output and turn
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
@@ -41,30 +41,33 @@ class Policy(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 120, 4) # grid size: 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
-        self.conv2 = nn.Conv2d(120, 5, 2) # grid size: 3x4x120 -> 2x3x5 ((2x2x120+1) x 5 parameters)
-        self.flatten = nn.Flatten()        
+        self.conv1 = nn.Conv2d(1, 120, 4)  # 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
+        self.conv2 = nn.Conv2d(120, 5, 2)  # 3x4x120 -> 2x3x5 ((2x2x120+1) x 5 parameters)
+        self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(31, 20)
-        self.fc2 = nn.Linear(20, 7) # output (column) move predictions
-    
+        self.fc2 = nn.Linear(20, 7)  # output (column) move predictions
+
     def forward(self, state, turn):
         x = F.relu(self.conv1(state))
         x = F.relu(self.conv2(x))
         x = self.flatten(x)
-        x = torch.cat((x, turn), dim=1) # concatenate conv output and turn
+        x = torch.cat((x, turn), dim=1)  # concatenate conv output and turn
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
 
 
 class Agent_Connect4_MCTS_NN(Agent_Connect4):
-    """Agent that plays Connect 4 using Monte Carlo Tree Search guided by neural networks."""
+    """
+    Agent that plays Connect 4 using Monte Carlo Tree Search
+    guided by neural networks.
+    """
 
-    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False,
-                 value=None, policy=None):
+    def __init__(self, agent_idx=None, simulations=1000, depth=None,
+                 verbose=False, value=None, policy=None):
         """
         Initialize agent with value and policy networks.
-        
+
         Parameters
         ----------
         agent_idx : int
@@ -81,23 +84,23 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         policy : torch.nn.Module
             Policy network. Used to predict next move for each state.
         """
-        super().__init__(agent_idx)        
-        self.simulations = simulations # number of simulations for MCTS
+        super().__init__(agent_idx)
+        self.simulations = simulations  # number of simulations for MCTS
         self.depth = depth
         self.verbose = verbose
         self.learning_rate = 0.001
         self.momentum = 0.9
         # set value network
         if value is None:
-            self.value = Value() 
-            self.value.name = 'value' # name model for reference later
+            self.value = Value()
+            self.value.name = 'value'  # name model for reference later
         else:
             self.value = value
         assert hasattr(self, 'value'), 'Invalid value network'
         # set policy network
         if policy is None:
             self.policy = Policy()
-            self.policy.name = 'policy' # name model for reference later
+            self.policy.name = 'policy'  # name model for reference later
         else:
             self.policy = policy
         assert hasattr(self, 'policy'), 'Invalid policy network'
@@ -105,7 +108,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
     def iter_minibatches(self, X1, X2, y, batch_size=32):
         """
         iterate over minibatches.
-        
+
         Parameters
         ----------
         X1 : torch.Tensor
@@ -129,7 +132,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
     def fit_epoch(self, X1, X2, y, model, batch_size=32):
         """
         Fit one epoch.
-        
+
         Parameters
         ----------
         X1 : torch.Tensor
@@ -144,20 +147,21 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             Size of minibatches.
         """
         # set optimizer
-        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
+        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate,
+                              momentum=self.momentum)
         # randomly permute data
         idx = torch.randperm(y.shape[0])
         X1 = X1[idx].view(X1.size())
         X2 = X2[idx].view(X2.size())
         y = y[idx].view(y.size())
         # iterate over minibatches
-        for X1_chunk, X2_chunk, y_chunk in self.iter_minibatches(X1, X2, y, batch_size=batch_size):
+        for X1_, X2_, y_ in self.iter_minibatches(X1, X2, y, batch_size=batch_size):
             # zero the parameter gradients
             optimizer.zero_grad()
             # forward + backward + optimize
-            outputs = model(X1_chunk, X2_chunk) # extra bracket for 1-dim input channel
+            outputs = model(X1_, X2_)  # extra bracket for 1-dim input channel
             # breakpoint()
-            loss = criterion(outputs, y_chunk)
+            loss = criterion(outputs, y_)
             loss.backward()
             optimizer.step()
 
@@ -165,7 +169,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
                   model, early_stopping=None, verbose=10, num_epochs=10):
         """
         Fit either value or policy network for num_epochs epochs.
-        
+
         Parameters
         ----------
         X_train1 : torch.Tensor
@@ -189,7 +193,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             Print metrics every verbose epochs.
         num_epochs : int
             Number of epochs to fit.
-        """ 
+        """
         if early_stopping is None:
             early_stopping = float("inf")
         # loop over the dataset multiple times
@@ -205,14 +209,14 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             y_pred = model(X_test1, X_test2)
             y_true = y_test
             test_loss = criterion(y_pred, y_true).item()
-            if epoch % verbose == 0: # print metrics
-                print(f"[{epoch}] train log loss = {train_loss}, test log loss = {test_loss}")
+            if epoch % verbose == 0:  # print metrics
+                print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
             # check best log loss so far
             if epoch == 0:
-                min_log_loss = test_loss # lowest log loss so far
-                min_log_loss_train = train_loss # associated train log loss for lowest test log loss so far
-                min_log_loss_epoch = 0 # epoch with lowest test loss
-                min_log_loss_model = deepcopy(model) # model with lowest test loss
+                min_log_loss = test_loss  # min test loss so far
+                min_log_loss_train = train_loss  # associated train loss
+                min_log_loss_epoch = 0  # epoch with min test loss
+                min_log_loss_model = deepcopy(model)  # model with min test loss
             elif test_loss < min_log_loss:
                 min_log_loss = test_loss
                 min_log_loss_train = train_loss
@@ -221,8 +225,11 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             # early stopping
             if epoch > min_log_loss_epoch + early_stopping:
                 break
+        # print optimal epoch
         print("optimal epoch:")
-        print(f"[{min_log_loss_epoch}] train log loss = {min_log_loss_train}, test log loss = {min_log_loss}")              
+        epoch = min_log_loss_epoch
+        train_loss, test_loss = min_log_loss_train, min_log_loss
+        print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
         # copy optimal model to agent
         assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
         if model.name == 'value':
@@ -271,7 +278,9 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             else:
                 agents = [op, self]
                 player = 1
-            Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player, datapoints_per_game=datapoints_per_game, verbose=False)
+            Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player,
+                                               datapoints_per_game=datapoints_per_game,
+                                               verbose=False)
             Xv.extend(Xv_)
             yv.extend(yv_)
             Xp.extend(Xp_)
@@ -294,8 +303,9 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
 
     def augment_data(self, Xv1, Xv2, yv, Xp1, Xp2, yp):
         """
-        Since Connect 4 is invariant to vertical reflections, add this reflect to the dataset.
-        
+        Since Connect 4 is invariant to vertical reflections,
+        add this reflection to the dataset.
+
         Parameters
         ----------
         Xv1 : list
@@ -326,11 +336,11 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             new_Xp2.append(X2)
             new_yp.append(y_)
         return new_Xv1, new_Xv2, new_yv, new_Xp1, new_Xp2, new_yp
-    
+
     def reflect(self, X, y=0):
         """
         Reflect Xv (or Xp) and yp along the veritcal line of symmetry.
-        
+
         Parameters
         ----------
         X : list
@@ -366,29 +376,35 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         n_train = int((1 - test_size) * n)
         n_test = int(test_size * n)
         print('generating training data')
-        Xv_train1, Xv_train2, yv_train, Xp_train1, Xp_train2, yp_train = self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
+        Xv_train1, Xv_train2, yv_train, Xp_train1, Xp_train2, yp_train = \
+            self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
         print('generating test data')
-        Xv_test1, Xv_test2, yv_test, Xp_test1, Xp_test2, yp_test  = self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
+        Xv_test1, Xv_test2, yv_test, Xp_test1, Xp_test2, yp_test = \
+            self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
         # fit value network
         print('fitting value network')
-        self.fit_model(Xv_train1, Xv_train2, yv_train, Xv_test1, Xv_test2, yv_test, model=self.value, **kwargs)
+        self.fit_model(Xv_train1, Xv_train2, yv_train, Xv_test1, Xv_test2, yv_test,
+                       model=self.value, **kwargs)
         # fit policy network
         print('fitting policy network')
-        self.fit_model(Xp_train1, Xp_train2, yp_train, Xp_test1, Xp_test2, yp_test, model=self.policy, **kwargs)
+        self.fit_model(Xp_train1, Xp_train2, yp_train, Xp_test1, Xp_test2, yp_test,
+                       model=self.policy, **kwargs)
 
     def play_turn(self, state):
         """
-        The Agent plays a turn, and returns the new game state, along with the move played.
-        
+        The Agent plays a turn, and returns the new game state,
+        along with the move played.
+
         Parameters
         ----------
         state : list
             The current game state.
         """
-        mcts = Connect4_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
-        mcts.simulations(self.simulations) # play simulations
-        move = mcts.best_move(verbose=self.verbose) # find best most
-        state = self.play_move(state, move) # play move
+        mcts = Connect4_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx,
+                                     depth=self.depth)
+        mcts.simulations(self.simulations)  # play simulations
+        move = mcts.best_move(verbose=self.verbose)  # find best most
+        state = self.play_move(state, move)  # play move
         return state, move
 
     def Connect4(self, state, turn):
@@ -411,7 +427,7 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
     def __init__(self, agent, *args, **kwargs):
         """
         Initialize the node.
-        
+
         Parameters
         ----------
         agent : Agent_Connect4_MCTS_NN
@@ -423,7 +439,7 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
     def play_move(self, move):
         """
         Play a specific move, returning the new game state.
-        
+
         Parameters
         ----------
         move : tuple of int
@@ -432,7 +448,7 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
         state = Agent_Connect4_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
-            policy=self.agent.policy 
+            policy=self.agent.policy
             ).play_move(self.state, move, deepcopy_state=True)
         return state
 
@@ -463,6 +479,6 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
             The current player's turn.
         """
         state = Game.replace_2d(state)
-        x1 = torch.FloatTensor([[state]]) # 2 brackets for [batch, input channel] dimensions
+        x1 = torch.FloatTensor([[state]])  # brackets [batch, input channel] dimensions
         x2 = torch.FloatTensor([[turn]])
         return x1, x2

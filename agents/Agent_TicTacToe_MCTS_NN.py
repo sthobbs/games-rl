@@ -20,13 +20,13 @@ class Value(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(10, 250)
-        self.drop1 = nn.Dropout(p=0.5)  
+        self.drop1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(250, 50)
         self.drop2 = nn.Dropout(p=0.5)
         self.fc3 = nn.Linear(50, 25)
         self.drop3 = nn.Dropout(p=0.5)
         self.fc4 = nn.Linear(25, 3)
-    
+
     def forward(self, x):
         x = F.relu(self.drop1(self.fc1(x)))
         x = F.relu(self.drop2(self.fc2(x)))
@@ -41,13 +41,13 @@ class Policy(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(10, 250)
-        self.drop1 = nn.Dropout(p=0.5)  
+        self.drop1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(250, 50)
         self.drop2 = nn.Dropout(p=0.5)
         self.fc3 = nn.Linear(50, 25)
         self.drop3 = nn.Dropout(p=0.5)
         self.fc4 = nn.Linear(25, 9)
-    
+
     def forward(self, x):
         x = F.relu(self.drop1(self.fc1(x)))
         x = F.relu(self.drop2(self.fc2(x)))
@@ -57,13 +57,16 @@ class Policy(nn.Module):
 
 
 class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
-    """Agent that plays tic-tac-toe using Monte Carlo Tree Search guided by neural networks."""
-    
+    """
+    Agent that plays tic-tac-toe using Monte Carlo Tree Search
+    guided by neural networks.
+    """
+
     def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False,
                  value=None, policy=None):
         """
         Initialize agent with value and policy networks.
-        
+
         Parameters
         ----------
         agent_idx : int
@@ -80,23 +83,23 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         policy : torch.nn.Module
             Policy network. Used to predict next move for each state.
         """
-        super().__init__(agent_idx)        
-        self.simulations = simulations # number of simulations for MCTS
+        super().__init__(agent_idx)
+        self.simulations = simulations  # number of simulations for MCTS
         self.depth = depth
         self.verbose = verbose
         self.learning_rate = 0.001
         self.momentum = 0.9
         # set value network
         if value is None:
-            self.value = Value() 
-            self.value.name = 'value' # name model for reference later
+            self.value = Value()
+            self.value.name = 'value'  # name model for reference later
         else:
             self.value = value
         assert hasattr(self, 'value'), 'Invalid value network'
         # set policy network
         if policy is None:
             self.policy = Policy()
-            self.policy.name = 'policy' # name model for reference later
+            self.policy.name = 'policy'  # name model for reference later
         else:
             self.policy = policy
         assert hasattr(self, 'policy'), 'Invalid policy network'
@@ -104,7 +107,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     def iter_minibatches(self, X, y, batch_size=32):
         """
         iterate over minibatches.
-        
+
         Parameters
         ----------
         X : torch.Tensor
@@ -125,7 +128,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     def fit_epoch(self, X, y, model, batch_size=32):
         """
         Fit one epoch.
-        
+
         Parameters
         ----------
         X : torch.Tensor
@@ -138,7 +141,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             Size of minibatches.
         """
         # set optimizer
-        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
+        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate,
+                              momentum=self.momentum)
         # randomly permute data
         idx = torch.randperm(X.shape[0])
         X = X[idx].view(X.size())
@@ -157,7 +161,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
                   verbose=10, num_epochs=10):
         """
         Fit either value or policy network for num_epochs epochs.
-        
+
         Parameters
         ----------
         X_train : torch.Tensor
@@ -177,7 +181,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             Print metrics every verbose epochs.
         num_epochs : int
             Number of epochs to train for.
-        """ 
+        """
         if early_stopping is None:
             early_stopping = float("inf")
         # loop over the dataset multiple times
@@ -191,14 +195,14 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             y_pred = model(X_test)
             y_true = y_test
             test_loss = criterion(y_pred, y_true).item()
-            if epoch % verbose == 0: # print metrics
-                print(f"[{epoch}] train log loss = {train_loss}, test log loss = {test_loss}")
+            if epoch % verbose == 0:  # print metrics
+                print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
             # check best log loss so far
             if epoch == 0:
-                min_log_loss = test_loss # lowest log loss so far
-                min_log_loss_train = train_loss # associated train log loss for lowest test log loss so far
-                min_log_loss_epoch = 0 # epoch with lowest test loss
-                min_log_loss_model = deepcopy(model) # model with lowest test loss
+                min_log_loss = test_loss  # min test loss so far
+                min_log_loss_train = train_loss  # associated train loss
+                min_log_loss_epoch = 0  # epoch with min test loss
+                min_log_loss_model = deepcopy(model)  # model with min test loss
             elif test_loss < min_log_loss:
                 min_log_loss = test_loss
                 min_log_loss_train = train_loss
@@ -207,8 +211,11 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             # early stopping
             if epoch > min_log_loss_epoch + early_stopping:
                 break
+        # print optimal epoch
         print("optimal epoch:")
-        print(f"[{min_log_loss_epoch}] train log loss = {min_log_loss_train}, test log loss = {min_log_loss}")              
+        epoch = min_log_loss_epoch
+        train_loss, test_loss = min_log_loss_train, min_log_loss
+        print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
         # copy optimal model to agent
         assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
         if model.name == 'value':
@@ -242,7 +249,9 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
                 agents = [op, self]
                 player = 1
             # generate data
-            Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player, datapoints_per_game=datapoints_per_game, verbose=False)
+            Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player,
+                                               datapoints_per_game=datapoints_per_game,
+                                               verbose=False)
             Xv.extend(Xv_)
             yv.extend(yv_)
             Xp.extend(Xp_)
@@ -339,7 +348,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     def rotate(self, X, y=0):
         """
         Rotate Xv (or Xp) and yp 90 degrees to the right.
-        
+
         Parameters
         ----------
         X : list
@@ -350,11 +359,11 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         X_ = [X[6], X[3], X[0], X[7], X[4], X[1], X[8], X[5], X[2], X[9]]
         y_ = [2, 5, 8, 1, 4, 7, 0, 3, 6][y]
         return X_, y_
-    
+
     def reflect(self, X, y=0):
         """
         Reflect Xv (or Xp) and yp along the veritcal line of symmetry.
-        
+
         Parameters
         ----------
         X : list
@@ -388,9 +397,11 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         n_train = int((1 - test_size) * n)
         n_test = int(test_size * n)
         print('generating training data')
-        Xv_train, yv_train, Xp_train, yp_train = self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
+        Xv_train, yv_train, Xp_train, yp_train = \
+            self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
         print('generating test data')
-        Xv_test,  yv_test,  Xp_test,  yp_test  = self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
+        Xv_test,  yv_test,  Xp_test,  yp_test = \
+            self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
         # fit value network
         print('fitting value network')
         self.fit_model(Xv_train, yv_train, Xv_test, yv_test, model=self.value, **kwargs)
@@ -400,17 +411,19 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
 
     def play_turn(self, state):
         """
-        The Agent plays a turn, and returns the new game state, along with the move played.
-        
+        The Agent plays a turn, and returns the new game state,
+        along with the move played.
+
         Parameters
         ----------
         state : list
             The current game state.
         """
-        mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
-        mcts.simulations(self.simulations) # play simulations
-        move = mcts.best_move(verbose=self.verbose) # find best most
-        state = self.play_move(state, move) # play move
+        mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx,
+                                      depth=self.depth)
+        mcts.simulations(self.simulations)  # play simulations
+        move = mcts.best_move(verbose=self.verbose)  # find best most
+        state = self.play_move(state, move)  # play move
         return state, move
 
 
@@ -420,7 +433,7 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
     def __init__(self, agent, *args, **kwargs):
         """
         Initialize the node.
-        
+
         Parameters
         ----------
         agent : Agent_TicTacToe_MCTS_NN
@@ -432,7 +445,7 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
     def play_move(self, move):
         """
         Play a specific move, returning the new game state.
-        
+
         Parameters
         ----------
         move : tuple of int
@@ -441,7 +454,7 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
         state = Agent_TicTacToe_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
-            policy=self.agent.policy 
+            policy=self.agent.policy
             ).play_move(self.state, move, deepcopy_state=True)
         return state
 

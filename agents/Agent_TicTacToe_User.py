@@ -7,18 +7,18 @@ class Agent_TicTacToe_User(Agent_TicTacToe):
     def __init__(self, agent_idx=None):
         """
         Initialize the Agent with an agent index.
-        
+
         Parameters
         ----------
         agent_idx : int
-            the agent index (which often specifies how they mark the game state).
+            the agent index (which often specifies to they mark the game state).
         """
         super().__init__(agent_idx)
 
     def play_turn(self, state):
         """
         the Agent plays a turn, and returns the new game state, along with the move played
-        
+
         Parameters
         ----------
         state : list of list of str
