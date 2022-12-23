@@ -15,7 +15,8 @@ criterion = nn.CrossEntropyLoss()
 
 
 class Value(nn.Module):
-    """Value network for agent."""
+    """Value network for agent, predicts P(win)"""
+
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(10, 250)
@@ -35,7 +36,8 @@ class Value(nn.Module):
 
 
 class Policy(nn.Module):
-    """Policy network for agent."""
+    """Policy network for agent, predicts next move"""
+
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(10, 250)
@@ -55,11 +57,29 @@ class Policy(nn.Module):
 
 
 class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
-    """Agent that plays tic-tac-toe moves based on Monte Carlo Tree Search as well as 2 neural networks.
-        - a value network that estimates P(win), and
-        - a value network that predicts next move
-    """
-    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False, value=None, policy=None):
+    """Agent that plays tic-tac-toe using Monte Carlo Tree Search guided by neural networks."""
+    
+    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False,
+                 value=None, policy=None):
+        """
+        Initialize agent with value and policy networks.
+        
+        Parameters
+        ----------
+        agent_idx : int
+            Index of agent in game.
+        simulations : int
+            Number of simulations to run for each move.
+        depth : int
+            Depth of tree to search.
+            If None, search until game is over.
+        verbose : bool
+            Print information about agent's moves. Useful for debugging.
+        value : torch.nn.Module
+            Value network. Used to predict P(win) for each state.
+        policy : torch.nn.Module
+            Policy network. Used to predict next move for each state.
+        """
         super().__init__(agent_idx)        
         self.simulations = simulations # number of simulations for MCTS
         self.depth = depth
@@ -82,6 +102,18 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         assert hasattr(self, 'policy'), 'Invalid policy network'
 
     def iter_minibatches(self, X, y, batch_size=32):
+        """
+        iterate over minibatches.
+        
+        Parameters
+        ----------
+        X : torch.Tensor
+            Input data.
+        y : torch.Tensor
+            Output data.
+        batch_size : int
+            Size of minibatches.
+        """
         # Provide chunks one by one
         cur = 0
         while cur < len(y):
@@ -91,36 +123,68 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             cur += batch_size
 
     def fit_epoch(self, X, y, model, batch_size=32):
-        """fit one epoch"""
-
+        """
+        Fit one epoch.
+        
+        Parameters
+        ----------
+        X : torch.Tensor
+            Input data.
+        y : torch.Tensor
+            Output data.
+        model : torch.nn.Module
+            Model to fit.
+        batch_size : int
+            Size of minibatches.
+        """
+        # set optimizer
         optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
-
         # randomly permute data
         idx = torch.randperm(X.shape[0])
         X = X[idx].view(X.size())
         y = y[idx].view(y.size())
-
+        # iterate over minibatches
         for X_chunk, y_chunk in self.iter_minibatches(X, y, batch_size=batch_size):
             # zero the parameter gradients
             optimizer.zero_grad()
             # forward + backward + optimize
             outputs = model(X_chunk)
-            # breakpoint()
             loss = criterion(outputs, y_chunk)
             loss.backward()
             optimizer.step()
 
-    def fit_model(self, X_train, y_train, X_test, y_test, model, early_stopping=None, verbose=10, num_epochs=10):
-        """fit either value or policy network for num_epochs epochs.""" 
+    def fit_model(self, X_train, y_train, X_test, y_test, model, early_stopping=None,
+                  verbose=10, num_epochs=10):
+        """
+        Fit either value or policy network for num_epochs epochs.
+        
+        Parameters
+        ----------
+        X_train : torch.Tensor
+            Input data for training.
+        y_train : torch.Tensor
+            Output data for training.
+        X_test : torch.Tensor
+            Input data for testing.
+        y_test : torch.Tensor
+            Output data for testing.
+        model : torch.nn.Module
+            Model to fit.
+        early_stopping : int
+            Number of epochs to wait before stopping if no improvement.
+            If None, do not use early stopping.
+        verbose : int
+            Print metrics every verbose epochs.
+        num_epochs : int
+            Number of epochs to train for.
+        """ 
         if early_stopping is None:
             early_stopping = float("inf")
-
-        for epoch in range(num_epochs):  # loop over the dataset multiple times
-            # shuffle data
-            # X_train, y_train = shuffle(X_train, y_train)
+        # loop over the dataset multiple times
+        for epoch in range(num_epochs):
             # fit 1 epoch
             self.fit_epoch(X_train, y_train, model)
-            # print metrics
+            # evaluate model
             y_pred = model(X_train)
             y_true = y_train
             train_loss = criterion(y_pred, y_true).item()
@@ -151,15 +215,25 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             self.value = min_log_loss_model
         elif model.name == 'policy':
             self.policy = min_log_loss_model
-        return
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
-        """play n games against different opponents, randomly selected from ops,
-        and generate data from these games for training/testing 
+        """
+        play n games against different opponents, randomly selected from ops,
+        and generate data from these games for training/testing.
+
+        Parameters
+        ----------
+        n : int
+            Number of games to play.
+        ops : list
+            List of opponent agents.
+        datapoints_per_game : int
+            Number of datapoints to generate per game.
         """
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
-            op = random.choice(ops) # pick random opponent
+            # pick random opponent
+            op = random.choice(ops)
             # randomly pick who goes first
             if random.random() < 0.5:
                 agents = [self, op]
@@ -167,12 +241,13 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             else:
                 agents = [op, self]
                 player = 1
+            # generate data
             Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player, datapoints_per_game=datapoints_per_game, verbose=False)
             Xv.extend(Xv_)
             yv.extend(yv_)
             Xp.extend(Xp_)
             yp.extend(yp_)
-        # augment data
+        # augment data (with rotations and reflections)
         Xv, yv, Xp, yp = self.augment_data(Xv, yv, Xp, yp)
         # convert to tensors
         Xv = torch.FloatTensor(Xv)
@@ -182,8 +257,20 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         return Xv, yv, Xp, yp
 
     def augment_data(self, Xv, yv, Xp, yp):
-        """since tic tac toe is invariant to rotations and reflections,
+        """
+        Augment data. Since tic tac toe is invariant to rotations and reflections,
         return all rotations and reflections of data.
+
+        Parameters
+        ----------
+        Xv : list
+            List of value network input data.
+        yv : list
+            List of value network output data.
+        Xp : list
+            List of policy network input data.
+        yp : list
+            List of policy network output data.
         """
         # Augment Value network
         new_Xv, new_yv = Xv[:], yv[:]
@@ -250,24 +337,52 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         return new_Xv, new_yv, new_Xp, new_yp
 
     def rotate(self, X, y=0):
-        """rotate Xv (or Xp) and yp right 90 degrees"""
+        """
+        Rotate Xv (or Xp) and yp 90 degrees to the right.
+        
+        Parameters
+        ----------
+        X : list
+            List of input data.
+        y : int
+            Policy network output.
+        """
         X_ = [X[6], X[3], X[0], X[7], X[4], X[1], X[8], X[5], X[2], X[9]]
         y_ = [2, 5, 8, 1, 4, 7, 0, 3, 6][y]
         return X_, y_
     
     def reflect(self, X, y=0):
-        """reflect Xv (or Xp) and yp along the veritcal line of symmetry"""
+        """
+        Reflect Xv (or Xp) and yp along the veritcal line of symmetry.
+        
+        Parameters
+        ----------
+        X : list
+            List of input data.
+        y : int
+            Policy network output.
+        """
         X_ = [X[2], X[1], X[0], X[5], X[4], X[3], X[8], X[7], X[6], X[9]]
         y_ = [2, 1, 0, 5, 4, 3, 8, 7, 6][y]
         return X_, y_
 
     def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, **kwargs):
-        """self-play n games to generate training data, then refit NNs
-        `datapoints_per_game` generate this many data points per game,
-            although the policy network may have slightly less, because if the final game state
-            is selected, it has no next move to predict.
         """
-        
+        Play n games and refit NNs.
+
+        Parameters
+        ----------
+        n : int
+            Number of games to play.
+        ops : list
+            List of agents to play against.
+        datapoints_per_game : int
+            Number of data points to generate per game (although the policy network may
+            have slightly less, because if the final game state is selected, it has no
+            next move to predict.)
+        test_size : float
+            Fraction of data to use for testing.
+        """
         # generate training and testing data from different games to avoid leakage
         assert 0 < test_size < 1, 'invalid test size'
         n_train = int((1 - test_size) * n)
@@ -284,7 +399,14 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         self.fit_model(Xp_train, yp_train, Xp_test, yp_test, model=self.policy, **kwargs)
 
     def play_turn(self, state):
-        """the Agent plays a turn, and returns the new game state, along with the move played"""
+        """
+        The Agent plays a turn, and returns the new game state, along with the move played.
+        
+        Parameters
+        ----------
+        state : list
+            The current game state.
+        """
         mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
         mcts.simulations(self.simulations) # play simulations
         move = mcts.best_move(verbose=self.verbose) # find best most
@@ -293,14 +415,29 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
 
 
 class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
-    """Monte Carlo Tree Search Node for a game of tic tac toe"""
+    """Neural Network Monte Carlo Tree Search Node for a game of tic tac toe."""
 
     def __init__(self, agent, *args, **kwargs):
+        """
+        Initialize the node.
+        
+        Parameters
+        ----------
+        agent : Agent_TicTacToe_MCTS_NN
+            The agent that is playing the game.
+        """
         super().__init__(agent=agent, *args, **kwargs)
         self.agent = agent
 
     def play_move(self, move):
-        """play a specific move, returning the new game state (and the move played)."""
+        """
+        Play a specific move, returning the new game state (and the move played).
+        
+        Parameters
+        ----------
+        move : tuple of int
+            The move to play.
+        """
         state, move = Agent_TicTacToe_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
@@ -309,19 +446,30 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
         return state, move
 
     def value_predict(self):
-        """Return output of value networks"""
+        """Return output of value network for the current state."""
         x = self.prep_data(self.state, self.turn)
         return F.softmax(self.agent.value(x), dim=1)[0]
 
     def policy_predict(self):
-        """Return output of policy networks for the parent's state,
-        parent's turn, and last move played"""
+        """
+        Return output of policy networks for the parent's state,
+        parent's turn, and last move played.
+        """
         move_idx = TicTacToe.move_index(self.last_move)
         x = self.prep_data(self.parent.state, self.parent.turn)
         return F.softmax(self.agent.policy(x), dim=1)[0][move_idx]
 
     def prep_data(self, state, turn):
-        """prepare input for policy or value network (it's the same input)"""
+        """
+        Prepare input for policy or value network (it's the same input)
+
+        Parameters
+        ----------
+        state : list
+            The current game state.
+        turn : int
+            The current player's turn.
+        """
         state = Game.replace_2d(state)
         state = Game.flatten_state(state)
         x = state + [turn]
