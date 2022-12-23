@@ -34,7 +34,7 @@ class Game():
         self.last_move = None
 
     def play_turn(self):
-        """Play agent's turn (i.e. update the game state and last move attributes)."""  
+        """Play agent's turn (i.e. update the game state and last move attributes)."""
         self.state, self.last_move = self.agents[self.turn].play_turn(self.state)
 
     def update_turn(self):
@@ -61,7 +61,7 @@ class Game():
         ----------
         pprint : bool
             If True, print the game state after each turn. Use for human vs bot play.
-        """       
+        """
         assert self.result() is None, 'no valid moves at beginning of game'
         # store initial state
         if self.store_states:
@@ -69,7 +69,8 @@ class Game():
         while True:
             # play turn
             self.play_turn()
-            # store list of (state, turn, last_move) tuples (where turn is the player who just played)
+            # store list of (state, turn, last_move) tuples, where turn is the player
+            # who just played
             if self.store_states:
                 self.states.append((deepcopy(self.state), self.turn, self.last_move))
             result = self.result()
@@ -77,7 +78,7 @@ class Game():
             if pprint:
                 try:
                     self.pretty_print()
-                except:
+                except NotImplementedError:
                     print(self.state)
             # check if game is over
             if result is not None:
@@ -98,12 +99,13 @@ class Game():
 
     def get_data_point(self, player=None):
         """
-        Get a random game state and the next move. This can be used to generate training data.
+        Construct data point from a random saved state. This can be used
+        to generate training data.
 
         Parameters
         ----------
         player : int or None
-            Can be set to the index of the agent from whom you want to pick a random move from.
+            Can be set to the index of the agent to pick a random move from.
             If None, pick a random state from any player
 
         Returns
@@ -136,13 +138,13 @@ class Game():
     def flatten_state(state):
         """
         Flatten state into a 1d list.
-        
+
         Parameters
         ----------
         state : list
             Game state (e.g. 3x3 array for tic tac toe)
-        """  
-        state = list(itertools.chain.from_iterable(state)) # flatten 2d list
+        """
+        state = list(itertools.chain.from_iterable(state))  # flatten 2d list
         return state
 
     @staticmethod

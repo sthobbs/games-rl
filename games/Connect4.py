@@ -23,12 +23,12 @@ class Connect4(Game):
         """
         assert len(agents) == 2, f'There should be 2 agents, but there are {len(agents)}.'
         if state is None:
-            self.state = [[' ', ' ', ' ', ' ', ' ', ' ', ' '], # ' ' => empty
-                          [' ', ' ', ' ', ' ', ' ', ' ', ' '], # 0 => agent 0 played there
-                          [' ', ' ', ' ', ' ', ' ', ' ', ' '], # 1 => agent 1 played there
+            self.state = [[' ', ' ', ' ', ' ', ' ', ' ', ' '],  # ' ' => empty
+                          [' ', ' ', ' ', ' ', ' ', ' ', ' '],  # 0 => agent 0 played here
+                          [' ', ' ', ' ', ' ', ' ', ' ', ' '],  # 1 => agent 1 played here
                           [' ', ' ', ' ', ' ', ' ', ' ', ' '],
                           [' ', ' ', ' ', ' ', ' ', ' ', ' '],
-                          [' ', ' ', ' ', ' ', ' ', ' ', ' ']] 
+                          [' ', ' ', ' ', ' ', ' ', ' ', ' ']]
         else:
             self.state = state
         super().__init__(self.state, agents, *args, **kwargs)
@@ -44,10 +44,10 @@ class Connect4(Game):
         agent index (i.e. `turn`) of winning player if a player has won.
         """
         # TODO: could optimize by only checking the last move
-        # check for winner 
+        # check for winner
         for col in range(7):
-            # set row to be the index of the top move in column col
-            # (assume the top move in one of the columns is part of the connect 4 (if it exists))
+            # set row to be the index of the top move in column col.
+            # assume any connect 4 involes the top move in one of the columns
             # TODO: probably slightly faster to start from bottom
             row = 0
             while row < 6 and self.state[row][col] == ' ':
@@ -55,35 +55,35 @@ class Connect4(Game):
             if row == 6:
                 continue
             val = self.state[row][col]
-            ### check for 4 in a row through (row, col)
-            # vertical case
-            if row < 3:
-                if val == self.state[row+1][col] == self.state[row+2][col] == self.state[row+3][col]:
-                    return val
-            # horizontal case
+            # check for 4 in a row through (row, col)
+            # 1) vertical case
+            if row < 3 and val == self.state[row+1][col] \
+                    == self.state[row+2][col] == self.state[row+3][col]:
+                return val
+            # 2) horizontal case
             cnt = 1
-            if col > 0: # moving left
+            if col > 0:  # moving left
                 j = col - 1
                 while (0 <= j and self.state[row][j] == val):
                     cnt += 1
                     j -= 1
-            if col < 6: # moving right
+            if col < 6:  # moving right
                 j = col + 1
                 while (j < 7 and self.state[row][j] == val):
                     cnt += 1
-                    j += 1	
+                    j += 1
             if cnt >= 4:
                 return val
-            # diagonal down-left/up-right case
+            # 3) diagonal down-left/up-right case
             cnt = 1
-            if col > 0 and row < 5: # moving down-left
+            if col > 0 and row < 5:  # moving down-left
                 i = row + 1
                 j = col - 1
                 while (i < 6 and 0 <= j and self.state[i][j] == val):
                     cnt += 1
                     i += 1
                     j -= 1
-            if col < 6 and row > 0: # moving up-right
+            if col < 6 and row > 0:  # moving up-right
                 i = row - 1
                 j = col + 1
                 while (0 <= i and j < 7 and self.state[i][j] == val):
@@ -92,16 +92,16 @@ class Connect4(Game):
                     j += 1
             if cnt >= 4:
                 return val
-            # diagonal up-left/down-right case
+            # 4) diagonal up-left/down-right case
             cnt = 1
-            if row > 0 and col > 0: # moving up-left
+            if row > 0 and col > 0:  # moving up-left
                 i = row - 1
                 j = col - 1
                 while (0 <= i and 0 <= j and self.state[i][j] == val):
                     cnt += 1
                     i -= 1
                     j -= 1
-            if row < 5 and col < 6: # moving down-right
+            if row < 5 and col < 6:  # moving down-right
                 i = row + 1
                 j = col + 1
                 while (i < 6 and j < 7 and self.state[i][j] == val):
@@ -119,7 +119,7 @@ class Connect4(Game):
 
     def pretty_print(self):
         """Print game state in human-readable format."""
-        print("\n  1   2   3   4   5   6   7  ") # column numbers for human readability
+        print("\n  1   2   3   4   5   6   7  ")  # column numbers for human readability
         for row in self.state:
             print(f"| {' | '.join(str(v) for v in row)} |")
 
@@ -127,17 +127,18 @@ class Connect4(Game):
     def move_index(move):
         """
         Get column index of move from tuple.
-        
+
         Parameters
         ----------
         move : tuple
             Move to get column index of.
         """
-        return move[1]    
+        return move[1]
 
     def get_data_point(self, process=True, **kwargs):
         """
-        Get a random game state and the next move. This can be used to generate training data.
+        Construct data point from a random saved state. This can be used
+        to generate training data.
 
         Parameters
         ----------
@@ -145,7 +146,7 @@ class Connect4(Game):
             If True, replace " "s with -1s, and ordinal encode move, so these can be
             used as input to NN training.
         player : int or None
-            Can be set to the index of the agent from whom you want to pick a random move from.
+            Can be set to the index of the agent to pick a random move from.
             If None, pick a random state from any player
 
         Returns

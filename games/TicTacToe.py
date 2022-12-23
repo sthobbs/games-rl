@@ -17,9 +17,9 @@ class TicTacToe(Game):
         """
         assert len(agents) == 2, f'There should be 2 agents, but there are {len(agents)}.'
         if state is None:
-            self.state = [[' ', ' ', ' '], # ' ' => empty
-                          [' ', ' ', ' '], # 0 => agent 0 played there
-                          [' ', ' ', ' ']] # 1 => agent 1 played there
+            self.state = [[' ', ' ', ' '],  # ' ' => empty
+                          [' ', ' ', ' '],  # 0 => agent 0 played there
+                          [' ', ' ', ' ']]  # 1 => agent 1 played there
         else:
             self.state = state
         super().__init__(self.state, agents, *args, **kwargs)
@@ -63,18 +63,19 @@ class TicTacToe(Game):
     def move_index(move):
         """
         Get index of move if state was flattened
-        
+
         Parameters
         ----------
         move : tuple of int
             Move to get index of.
         """
         move_idx = 3 * move[0] + move[1]
-        return move_idx    
+        return move_idx
 
     def get_data_point(self, process=True, **kwargs):
         """
-        Get a random game state and the next move. This can be used to generate training data.
+        Construct data point from a random saved state. This can be used
+        to generate training data.
 
         Parameters
         ----------
@@ -82,7 +83,7 @@ class TicTacToe(Game):
             If True, replace " "s with -1s, flatten state to a 1d list, and
             ordinal encode move, so these can be used as input to NN training
         player : int or None
-            Can be set to the index of the agent from whom you want to pick a random move from.
+            Can be set to the index of the agent to pick a random move from.
             If None, pick a random state from any player
 
         Returns
