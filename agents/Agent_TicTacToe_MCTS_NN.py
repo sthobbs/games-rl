@@ -18,32 +18,40 @@ class Value(nn.Module):
     """Value network for agent."""
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(10, 120)
-        self.fc2 = nn.Linear(120, 25)
-        self.fc3 = nn.Linear(25, 3)
+        self.fc1 = nn.Linear(10, 250)
+        self.drop1 = nn.Dropout(p=0.5)  
+        self.fc2 = nn.Linear(250, 50)
+        self.drop2 = nn.Dropout(p=0.5)
+        self.fc3 = nn.Linear(50, 25)
+        self.drop3 = nn.Dropout(p=0.5)
+        self.fc4 = nn.Linear(25, 3)
     
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        # x = F.softmax(self.fc3(x), dim=1)
-        x = self.fc3(x)
+        x = F.relu(self.drop1(self.fc1(x)))
+        x = F.relu(self.drop2(self.fc2(x)))
+        x = F.relu(self.drop3(self.fc3(x)))
+        x = self.fc4(x)
         return x
+
 
 class Policy(nn.Module):
     """Policy network for agent."""
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(10, 120)
-        self.fc2 = nn.Linear(120, 25)
-        self.fc3 = nn.Linear(25, 9)
+        self.fc1 = nn.Linear(10, 250)
+        self.drop1 = nn.Dropout(p=0.5)  
+        self.fc2 = nn.Linear(250, 50)
+        self.drop2 = nn.Dropout(p=0.5)
+        self.fc3 = nn.Linear(50, 25)
+        self.drop3 = nn.Dropout(p=0.5)
+        self.fc4 = nn.Linear(25, 9)
     
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        # x = F.softmax(self.fc3(x), dim=1)
-        x = self.fc3(x)
+        x = F.relu(self.drop1(self.fc1(x)))
+        x = F.relu(self.drop2(self.fc2(x)))
+        x = F.relu(self.drop3(self.fc3(x)))
+        x = self.fc4(x)
         return x
-
 
 
 class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
