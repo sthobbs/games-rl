@@ -73,7 +73,7 @@ class MCTS_Node():
     @abc.abstractmethod
     def play_move(self, move):
         """
-        play a specific move, returning the new game state and the move played.
+        play a specific move, returning the new game state.
         
         Parameters
         ----------
@@ -84,8 +84,6 @@ class MCTS_Node():
         -------
         new_state : any
             new game state after playing move
-        move : any
-            move played
         """
     
     def simulations(self, n):
@@ -133,7 +131,7 @@ class MCTS_Node():
         """Instantiate child nodes for each possible valid next move."""
         moves = self.valid_moves()
         for move in moves:
-            new_state, _ = self.play_move(move)
+            new_state = self.play_move(move)
             self.children.append(self.__class__(state=new_state, parent=self, last_move=move, *self.args, **self.kwargs, **kwargs))
 
     def action_value(self):

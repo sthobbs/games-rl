@@ -31,7 +31,7 @@ class Agent_Connect4_MCTS(Agent_Connect4):
         # find best most
         move = mcts.best_move(verbose=self.verbose)
         # play move
-        state, move = self.play_move(state, move)
+        state = self.play_move(state, move)
         return state, move
 
 
@@ -40,12 +40,12 @@ class Connect4_MCTS_Node(MCTS_Connect4_methods, MCTS_Node):
 
     def play_move(self, move):
         """
-        Play a specific move, returning the new game state (and the move played).
+        Play a specific move, returning the new game state.
         
         Parameters
         ----------
         move : tuple of int
             the move to play
         """
-        state, move = Agent_Connect4_MCTS(self.turn).play_move(self.state, move, deepcopy_state=True)
-        return state, move
+        state = Agent_Connect4_MCTS(self.turn).play_move(self.state, move, deepcopy_state=True)
+        return state

@@ -410,7 +410,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
         mcts.simulations(self.simulations) # play simulations
         move = mcts.best_move(verbose=self.verbose) # find best most
-        state, move = self.play_move(state, move) # play move
+        state = self.play_move(state, move) # play move
         return state, move
 
 
@@ -431,22 +431,22 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
 
     def play_move(self, move):
         """
-        Play a specific move, returning the new game state (and the move played).
+        Play a specific move, returning the new game state.
         
         Parameters
         ----------
         move : tuple of int
             The move to play.
         """
-        state, move = Agent_TicTacToe_MCTS_NN(
+        state = Agent_TicTacToe_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
             policy=self.agent.policy 
             ).play_move(self.state, move, deepcopy_state=True)
-        return state, move
+        return state
 
     def value_predict(self):
-        """Return output of value network for the current state."""
+        """Return output of the value network for the current state."""
         x = self.prep_data(self.state, self.turn)
         return F.softmax(self.agent.value(x), dim=1)[0]
 

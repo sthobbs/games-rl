@@ -30,5 +30,5 @@ class Agent_Connect4_Random(Agent_Connect4):
         # pick random valid move
         move = random.choice(valid)
         # play move
-        state, move = self.play_move(state, move)
+        state = self.play_move(state, move)
         return state, move

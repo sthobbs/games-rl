@@ -51,4 +51,4 @@ class Agent_TicTacToe(Agent):
             state = deepcopy(state)
         i, j = move
         state[i][j] = self.agent_idx
-        return state, move
+        return state

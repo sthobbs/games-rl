@@ -39,7 +39,7 @@ class Agent_TicTacToe_MCTS(Agent_TicTacToe):
         # find best most
         move = mcts.best_move(verbose=self.verbose)
         # play move
-        state, move = self.play_move(state, move) 
+        state = self.play_move(state, move) 
         return state, move
 
 
@@ -48,12 +48,12 @@ class TicTacToe_MCTS_Node(MCTS_TicTacToe_methods, MCTS_Node):
 
     def play_move(self, move):
         """
-        play a specific move, returning the new game state (and the move played).
+        play a specific move, returning the new game state.
         
         Parameters
         ----------
         move : tuple of int
             the move to play
         """
-        state, move = Agent_TicTacToe_MCTS(self.turn).play_move(self.state, move, deepcopy_state=True)
-        return state, move
+        state = Agent_TicTacToe_MCTS(self.turn).play_move(self.state, move, deepcopy_state=True)
+        return state

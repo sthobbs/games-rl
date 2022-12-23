@@ -38,5 +38,5 @@ class Agent_Connect4_User(Agent_Connect4):
         move -= 1
         move = [(i, j) for i, j in valid if j == move][0] # convert col to (row, col)
         # play move
-        state, move = self.play_move(state, move) # play move
+        state = self.play_move(state, move) # play move
         return state, move

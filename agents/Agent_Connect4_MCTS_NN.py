@@ -388,10 +388,10 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         mcts = Connect4_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
         mcts.simulations(self.simulations) # play simulations
         move = mcts.best_move(verbose=self.verbose) # find best most
-        state, move = self.play_move(state, move) # play move
+        state = self.play_move(state, move) # play move
         return state, move
 
-    def format_X_datapoint(self, state, turn):
+    def Connect4(self, state, turn):
         """
         Format a datapoint for when generating training data.
 
@@ -422,19 +422,19 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
 
     def play_move(self, move):
         """
-        Play a specific move, returning the new game state (and the move played).
+        Play a specific move, returning the new game state.
         
         Parameters
         ----------
         move : tuple of int
             The move to play.
         """
-        state, move = Agent_Connect4_MCTS_NN(
+        state = Agent_Connect4_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
             policy=self.agent.policy 
             ).play_move(self.state, move, deepcopy_state=True)
-        return state, move
+        return state
 
     def value_predict(self):
         """Return output of the value network for the current state."""

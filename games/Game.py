@@ -13,7 +13,7 @@ class Game():
 
         Parameters
         ----------
-        state : list
+        state : any
             Game state (e.g. 3x3 array for tic tac toe)
         agents : list
             List of agents playing the game
@@ -82,7 +82,7 @@ class Game():
             # check if game is over
             if result is not None:
                 # print game result
-                if result is not None:
+                if pprint:
                     if result == -1:
                         print("tie game")
                     else:

@@ -34,5 +34,5 @@ class Agent_TicTacToe_User(Agent_TicTacToe):
         i, j = divmod(move-1, 3)
         move = (i, j)
         # play move
-        state, move = self.play_move(state, move)
+        state = self.play_move(state, move)
         return state, move
