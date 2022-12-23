@@ -16,7 +16,8 @@ criterion = nn.CrossEntropyLoss()
 
 # TODO? could try adding fc layer of (flattened) raw state values
 class Value(nn.Module):
-    """Value network for agent."""
+    """Value network for agent, predicts P(win)"""
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 120, 4) # grid size: 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
@@ -34,8 +35,10 @@ class Value(nn.Module):
         x = self.fc2(x)
         return x
 
+
 class Policy(nn.Module):
-    """Policy network for agent."""
+    """Policy network for agent, predicts next move"""
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 120, 4) # grid size: 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
@@ -54,13 +57,30 @@ class Policy(nn.Module):
         return x
 
 
-
 class Agent_Connect4_MCTS_NN(Agent_Connect4):
-    """Agent that plays Connect 4 moves based on Monte Carlo Tree Search as well as 2 neural networks.
-        - a value network that estimates P(win), and
-        - a value network that predicts next move
-    """
-    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False, value=None, policy=None):
+    """Agent that plays Connect 4 using Monte Carlo Tree Search guided by neural networks."""
+
+    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False,
+                 value=None, policy=None):
+        """
+        Initialize agent with value and policy networks.
+        
+        Parameters
+        ----------
+        agent_idx : int
+            Index of agent in game.
+        simulations : int
+            Number of simulations to run for each move.
+        depth : int
+            Depth of tree to search.
+            If None, search until game is over.
+        verbose : bool
+            Print information about agent's moves. Useful for debugging.
+        value : torch.nn.Module
+            Value network. Used to predict P(win) for each state.
+        policy : torch.nn.Module
+            Policy network. Used to predict next move for each state.
+        """
         super().__init__(agent_idx)        
         self.simulations = simulations # number of simulations for MCTS
         self.depth = depth
@@ -83,7 +103,21 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         assert hasattr(self, 'policy'), 'Invalid policy network'
 
     def iter_minibatches(self, X1, X2, y, batch_size=32):
-        # Provide chunks one by one
+        """
+        iterate over minibatches.
+        
+        Parameters
+        ----------
+        X1 : torch.Tensor
+            Game state input data.
+        X2 : torch.Tensor
+            Agent turn input data.
+        y : torch.Tensor
+            Output data.
+        batch_size : int
+            Size of minibatches.
+        """
+        # yield chunks one by one
         cur = 0
         while cur < len(y):
             chunkrows = slice(cur, cur + batch_size)
@@ -93,16 +127,30 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             cur += batch_size
 
     def fit_epoch(self, X1, X2, y, model, batch_size=32):
-        """fit one epoch"""
-
-        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
+        """
+        Fit one epoch.
         
+        Parameters
+        ----------
+        X1 : torch.Tensor
+            Game state input data.
+        X2 : torch.Tensor
+            Agent turn input data.
+        y : torch.Tensor
+            Output data.
+        model : torch.nn.Module
+            Model to fit.
+        batch_size : int
+            Size of minibatches.
+        """
+        # set optimizer
+        optimizer = optim.SGD(model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         # randomly permute data
         idx = torch.randperm(y.shape[0])
         X1 = X1[idx].view(X1.size())
         X2 = X2[idx].view(X2.size())
         y = y[idx].view(y.size())
-
+        # iterate over minibatches
         for X1_chunk, X2_chunk, y_chunk in self.iter_minibatches(X1, X2, y, batch_size=batch_size):
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -115,10 +163,36 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
 
     def fit_model(self, X_train1, X_train2, y_train, X_test1, X_test2, y_test,
                   model, early_stopping=None, verbose=10, num_epochs=10):
-        """fit either value or policy network for num_epochs epochs.""" 
+        """
+        Fit either value or policy network for num_epochs epochs.
+        
+        Parameters
+        ----------
+        X_train1 : torch.Tensor
+            Game state input data for training.
+        X_train2 : torch.Tensor
+            Agent turn input data for training.
+        y_train : torch.Tensor
+            Output data for training.
+        X_test1 : torch.Tensor
+            Game state input data for testing.
+        X_test2 : torch.Tensor
+            Agent turn input data for testing.
+        y_test : torch.Tensor
+            Output data for testing.
+        model : torch.nn.Module
+            Model to fit.
+        early_stopping : int
+            Number of epochs to wait before stopping if no improvement.
+            If None, do not use early stopping.
+        verbose : int
+            Print metrics every verbose epochs.
+        num_epochs : int
+            Number of epochs to fit.
+        """ 
         if early_stopping is None:
             early_stopping = float("inf")
-
+        # loop over the dataset multiple times
         for epoch in range(num_epochs):  # loop over the dataset multiple times
             # fit 1 epoch
             self.fit_epoch(X_train1, X_train2, y_train, model)
@@ -158,12 +232,38 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         return
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
-        """play n games against different opponents, randomly selected from ops,
-        and generate data from these games for training/testing 
+        """
+        play n games against different opponents, randomly selected from ops,
+        and generate data from these games for training/testing.
+
+        Parameters
+        ----------
+        n : int
+            Number of games to play.
+        ops : list
+            List of opponent agents.
+        datapoints_per_game : int
+            Number of datapoints to generate per game.
+
+        Returns
+        -------
+        Xv1 : torch.Tensor
+            Game state value network input data.
+        Xv2 : torch.Tensor
+            Agent turn value network input data.
+        yv : torch.Tensor
+            Value network output data.
+        Xp1 : torch.Tensor
+            Game state policy network input data.
+        Xp2 : torch.Tensor
+            Agent turn policy network input data.
+        yp : torch.Tensor
+            Policy network output data.
         """
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
-            op = random.choice(ops) # pick random opponent
+            # pick random opponent
+            op = random.choice(ops)
             # randomly pick who goes first
             if random.random() < 0.5:
                 agents = [self, op]
@@ -181,7 +281,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         Xv2 = [[turn] for _, turn in Xv]
         Xp1 = [state for state, _ in Xp]
         Xp2 = [[turn] for _, turn in Xp]
-        # augment data
+        # augment data (since Connect 4 is invariant to vertical reflections)
         Xv1, Xv2, yv, Xp1, Xp2, yp = self.augment_data(Xv1, Xv2, yv, Xp1, Xp2, yp)
         # convert to tensors
         Xv1 = torch.FloatTensor(Xv1)
@@ -193,7 +293,24 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         return Xv1, Xv2, yv, Xp1, Xp2, yp
 
     def augment_data(self, Xv1, Xv2, yv, Xp1, Xp2, yp):
-        """since Connect 4 is invariant to vertical reflections, add this reflect to the dataset"""
+        """
+        Since Connect 4 is invariant to vertical reflections, add this reflect to the dataset.
+        
+        Parameters
+        ----------
+        Xv1 : list
+            Game state value network input data.
+        Xv2 : list
+            Agent turn value network input data.
+        yv : list
+            Value network output data.
+        Xp1 : list
+            Game state policy network input data.
+        Xp2 : list
+            Agent turn policy network input data.
+        yp : list
+            Policy network output data.
+        """
         # Augment Value network
         new_Xv1, new_Xv2, new_yv = Xv1[:], Xv2[:], yv[:]
         for X1, X2, y in zip(Xv1, Xv2, yv):
@@ -211,7 +328,16 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         return new_Xv1, new_Xv2, new_yv, new_Xp1, new_Xp2, new_yp
     
     def reflect(self, X, y=0):
-        """reflect Xv (or Xp) and yp along the veritcal line of symmetry"""
+        """
+        Reflect Xv (or Xp) and yp along the veritcal line of symmetry.
+        
+        Parameters
+        ----------
+        X : list
+            Game state value network input data.
+        y : int
+            Policy network output data.
+        """
         X_ = []
         for row in X:
             X_.append(row[::-1])
@@ -219,12 +345,22 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         return X_, y_
 
     def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, **kwargs):
-        """self-play n games to generate training data, then refit NNs
-        `datapoints_per_game` generate this many data points per game,
-            although the policy network may have slightly less, because if the final game state
-            is selected, it has no next move to predict.
         """
+        Play n games and refit NNs.
 
+        Parameters
+        ----------
+        n : int
+            Number of games to play.
+        ops : list
+            List of agents to play against.
+        datapoints_per_game : int
+            Number of data points to generate per game (although the policy network may
+            have slightly less, because if the final game state is selected, it has no
+            next move to predict.)
+        test_size : float
+            Fraction of data to use for testing.
+        """
         # generate training and testing data from different games to avoid leakage
         assert 0 < test_size < 1, 'invalid test size'
         n_train = int((1 - test_size) * n)
@@ -241,7 +377,14 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         self.fit_model(Xp_train1, Xp_train2, yp_train, Xp_test1, Xp_test2, yp_test, model=self.policy, **kwargs)
 
     def play_turn(self, state):
-        """the Agent plays a turn, and returns the new game state, along with the move played"""
+        """
+        The Agent plays a turn, and returns the new game state, along with the move played.
+        
+        Parameters
+        ----------
+        state : list
+            The current game state.
+        """
         mcts = Connect4_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx, depth=self.depth)
         mcts.simulations(self.simulations) # play simulations
         move = mcts.best_move(verbose=self.verbose) # find best most
@@ -249,20 +392,43 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         return state, move
 
     def format_X_datapoint(self, state, turn):
-        """format Xv (which is the sme as Xp) datapoint as a list of model inputs.
-        Overwrite this in subclasses for different formats"""
+        """
+        Format a datapoint for when generating training data.
+
+        Parameters
+        ----------
+        state : list
+            the current game state
+        turn : int
+            the current turn
+        """
         return [state, turn]
 
 
 class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
-    """Monte Carlo Tree Search Node for a game of Connect 4"""
+    """Neural Network Monte Carlo Tree Search Node for a game of Connect 4."""
 
     def __init__(self, agent, *args, **kwargs):
+        """
+        Initialize the node.
+        
+        Parameters
+        ----------
+        agent : Agent_Connect4_MCTS_NN
+            The agent that is playing the game.
+        """
         super().__init__(agent=agent, *args, **kwargs)
         self.agent = agent
 
     def play_move(self, move):
-        """play a specific move, returning the new game state (and the move played)."""
+        """
+        Play a specific move, returning the new game state (and the move played).
+        
+        Parameters
+        ----------
+        move : tuple of int
+            The move to play.
+        """
         state, move = Agent_Connect4_MCTS_NN(
             agent_idx=self.turn,
             value=self.agent.value,
@@ -271,20 +437,31 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
         return state, move
 
     def value_predict(self):
-        """Return output of value networks"""
+        """Return output of the value network for the current state."""
         x1, x2 = self.prep_data(self.state, self.turn)
         # breakpoint()
         return F.softmax(self.agent.value(x1, x2), dim=1)[0]
 
     def policy_predict(self):
-        """Return output of policy networks for the parent's state,
-        parent's turn, and last move played"""
+        """
+        Return output of policy networks for the parent's state,
+        parent's turn, and last move played.
+        """
         move_idx = Connect4.move_index(self.last_move)
         x1, x2 = self.prep_data(self.parent.state, self.parent.turn)
         return F.softmax(self.agent.policy(x1, x2), dim=1)[0][move_idx]
 
     def prep_data(self, state, turn):
-        """prepare input for policy or value network (it's the same input)"""
+        """
+        Prepare input for policy or value network (it's the same input)
+
+        Parameters
+        ----------
+        state : list
+            The current game state.
+        turn : int
+            The current player's turn.
+        """
         state = Game.replace_2d(state)
         x1 = torch.FloatTensor([[state]]) # 2 brackets for [batch, input channel] dimensions
         x2 = torch.FloatTensor([[turn]])

@@ -5,38 +5,110 @@ from games.TicTacToe import TicTacToe
 
 
 class Agent():
+    """Abstract class for Agents to play games."""
     
     def __init__(self, agent_idx):
+        """
+        Initialize the Agent with an agent index.
+        
+        Parameters
+        ----------
+        agent_idx : int
+            the agent index (which often specifies how they mark the game state).
+        """
         self.agent_idx = agent_idx # the agent index (which often specifies how they mark the game state)
         self.game = TicTacToe
 
     @abc.abstractmethod
     def play_turn(self, state):
-        """the Agent plays a turn, and returns the new game state, along with the move played"""
-        ...
+        """
+        the Agent plays a turn, and returns the new game state, along with the move played
+        
+        Parameters
+        ----------
+        state : any
+            the current game state
+            
+        Returns
+        -------
+        state : any
+            the new game state
+        move : any
+            the move played
+        """
 
     def format_X_datapoint(self, state, turn):
-        """format Xv (which is the sme as Xp) datapoint as a list of model inputs.
-        Overwrite this in subclasses for different formats"""
+        """
+        Format a datapoint for when generating training data.
+
+        Parameters
+        ----------
+        state : any
+            the current game state
+        turn : int
+            the current turn
+        """
         return state + [turn]
 
     def to_pickle(self, path):
+        """
+        Save the agent to a pickle file.
+        
+        Parameters
+        ----------
+        path : str
+            the path to save the pickle file to
+        """
         with open(path, 'wb') as f:
             pickle.dump(self, f)
 
     def from_pickle(self, path):
+        """
+        Load the agent from a pickle file.
+        
+        Parameters
+        ----------
+        path : str
+            the path to load the pickle file from
+        """
         with open(path) as f:
             self = pickle.load(f)
 
     # TODO?: parallelize this
     # TODO?: might move this out of the agent class
-    def gen_data(self, n, agents, player=None, return_results=False, pprint=False, 
+    def gen_data(self, n, agents, player=None, return_results=False,
                  datapoints_per_game=1, verbose=True, one_hot=True):
-        """Generate training data (with n data points) for two models, with n self-play games
-            - One model outputs P(win),
-            - The other predicts the next move
-        `player` index of agent which we are generating data for.
+        """
+        Generate training data by having agents play against each other.
+
+        Parameters
+        ----------
+        n : int
+            number of games to play
+        agents : list
+            list of agents to play the game
+        player : int
+            index of agent which we are generating data for.
             if None, data is picked randomly from all players
+        return_results : bool
+            if True, return the results of the games
+        datapoints_per_game : int
+            number of datapoints to generate per game
+        verbose : bool
+            if True, show a progress bar
+        one_hot : bool
+            if True, encode the game result as a one-hot vector
+
+        Returns
+        -------
+        Xv : list
+            input data for the value model (which predicts P(win))
+        Yv : list
+            list of game results
+        Xp : list
+            input data for the policy model (which predicts the next move)
+        Yp : list
+            list of moves
         """
         # set agent indexes
         for i, agent in enumerate(agents):
@@ -47,7 +119,7 @@ class Agent():
             # set up game
             g = self.game(agents, store_states=True)
             # play game
-            g.play_game(pprint=pprint)
+            g.play_game(pprint=False)
             # get random position from game, and the game result (i.e. which agent won, or draw)
             for _ in range(datapoints_per_game):
                 state, turn, move, winner = g.get_data_point(player=player)
