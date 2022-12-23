@@ -6,7 +6,8 @@ import random
 class MCTS_Node():
     """Monte Carlo Tree Search Node."""
 
-    def __init__(self, state, parent=None, turn=None, last_move=None, tau=0.25, *args, **kwargs):
+    def __init__(self, state, parent=None, turn=None, last_move=None,
+                 tau=0.25, *args, **kwargs):
         """
         Initialize a MCTS Node.
 
@@ -16,7 +17,7 @@ class MCTS_Node():
             Game state representation
         parent : MCTS_Node
             Node's parent (the root's parent is None)
-        turn : int 
+        turn : int
             Agent index of current player
         last_move : any
             Most recent move that updated the game state
@@ -27,32 +28,33 @@ class MCTS_Node():
         kwargs : dict
             kwargs to pass to Node's children
         """
-        self.state = state # game state representation 
-        self.parent = parent # Node's parent (the root's parent is None) 
-        self.children = [] # Node's children, to be determined
-        self.w = 0 # num wins from current node
-        self.t = 0 # num ties from current node
-        self.n = 1 # num visits to current node
-        self.c = 1.41 # hyperparameter, sqrt(2) is common for simple MCTS
-        self.last_move = last_move # most recent move that updated the game state
-        self.tau = tau # tau > 0. pick move with probability p**(1/tau)
-        if parent is None: # if root
+        self.state = state  # game state representation
+        self.parent = parent  # Node's parent (the root's parent is None)
+        self.children = []  # Node's children, to be determined
+        self.w = 0  # num wins from current node
+        self.t = 0  # num ties from current node
+        self.n = 1  # num visits to current node
+        self.c = 1.41  # hyperparameter, sqrt(2) is common for simple MCTS
+        self.last_move = last_move  # most recent move that updated the game state
+        self.tau = tau  # tau > 0. pick move with probability p**(1/tau)
+        if parent is None:  # if root
             assert turn is not None, 'turn must be specified for the root'
             self.turn = turn
             self.N = None
         else:
             self.turn = parent.turn
             self.update_turn()
-            self.N = parent.n # num visits to parent node
+            self.N = parent.n  # num visits to parent node
         self.args = args
         self.kwargs = kwargs
 
     def __str__(self):
         """MCTS Node details, primarily for debugging."""
         win_rate = round(100*self.w/(self.n-1), 2)
-        action_value = round(self.action_value(),8)
+        action_value = round(self.action_value(), 8)
         return f"state = {self.state}, move = {self.last_move}, win_rate = {win_rate}%, \
-            w = {self.w}, t = {self.t}, n = {self.n-1}, action_value = {action_value}, turn = {self.turn}"
+                w = {self.w}, t = {self.t}, n = {self.n-1}, \
+                action_value = {action_value}, turn = {self.turn}"
 
     @abc.abstractmethod
     def valid_moves(self):
@@ -69,12 +71,12 @@ class MCTS_Node():
         -1 if the game is over and there is no winner (i.e. a tie).
         agent index (i.e. `turn`) of winning player if a player has won.
         """
-    
+
     @abc.abstractmethod
     def play_move(self, move):
         """
         play a specific move, returning the new game state.
-        
+
         Parameters
         ----------
         move : any
@@ -85,11 +87,11 @@ class MCTS_Node():
         new_state : any
             new game state after playing move
         """
-    
+
     def simulations(self, n):
         """
         Run MCTS with n simulations.
-        
+
         Parameters
         ----------
         n : int
@@ -101,7 +103,7 @@ class MCTS_Node():
     def best_move(self, verbose=False):
         """
         Return move based on which child node has the most visits n.
-        
+
         Parameters
         ----------
         verbose : bool
@@ -120,7 +122,7 @@ class MCTS_Node():
             print(f"Player {self.turn}: {move}")
             self.print_children()
             print()
-        return move   
+        return move
 
     def print_children(self):
         """Print info on child nodes."""
@@ -132,13 +134,16 @@ class MCTS_Node():
         moves = self.valid_moves()
         for move in moves:
             new_state = self.play_move(move)
-            self.children.append(self.__class__(state=new_state, parent=self, last_move=move, *self.args, **self.kwargs, **kwargs))
+            self.children.append(
+                self.__class__(state=new_state, parent=self, last_move=move,
+                               *self.args, **self.kwargs, **kwargs))
 
     def action_value(self):
         """Get action value for current node."""
         self.N = self.parent.n
         # (L-W)/n + c*sqrt(ln(N)/n), # L-W becuase it's from the opponent's perspective
-        return ((self.n - 1 - self.w - self.t) - self.w) / self.n + self.c * (math.log(self.N) / self.n)**0.5
+        return ((self.n - 1 - self.w - self.t) - self.w) / self.n + \
+            self.c * (math.log(self.N) / self.n)**0.5
 
     def max_action_child(self):
         """Return child node with max action_value."""
@@ -152,7 +157,8 @@ class MCTS_Node():
             self.set_children()
         # get game status (including if game is not over)
         result = self.game_result()
-        assert self.children or result is not None, "game isn't over, but there are no child nodes"
+        assert self.children or result is not None, \
+            "game isn't over, but there are no child nodes"
         # if game is over, go back up the tree updating values
         if result is not None:
             self.winner = result
@@ -170,19 +176,19 @@ class MCTS_Node():
     def traverse_up(self):
         """Traverse up the tree, updating counts."""
         if self.winner == self.turn:
-            self.w += 1 # increment num wins
+            self.w += 1  # increment num wins
         elif self.winner == -1:
-            self.t += 1 # increment number of ties
-        self.n += 1 # increment num visits    
+            self.t += 1  # increment number of ties
+        self.n += 1  # increment num visits
         # if not root, recursively traverse up the tree
         if self.parent is not None:
-            self.parent.winner = self.winner # propagate winner up
+            self.parent.winner = self.winner  # propagate winner up
             self.parent.traverse_up()
 
     def update_turn(self, num_players=2):
         """
         Update turn to the next player (i.e. agent)
-        
+
         Parameters
         ----------
         num_players : int

@@ -8,7 +8,7 @@ class MCTS_Connect4_methods():
     def valid_moves(self):
         """Return a list of valid next moves for a given game state."""
         return Agent_Connect4().valid_moves(self.state)
-    
+
     def game_result(self):
         """
         Determine the winner of the game.
