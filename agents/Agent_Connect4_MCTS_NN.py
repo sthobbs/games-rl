@@ -407,7 +407,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         state = self.play_move(state, move)  # play move
         return state, move
 
-    def Connect4(self, state, turn):
+    def format_X_datapoint(self, state, turn):
         """
         Format a datapoint for when generating training data.
 
