@@ -20,17 +20,14 @@ class Value(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(10, 250)
-        self.drop1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(250, 50)
-        self.drop2 = nn.Dropout(p=0.5)
         self.fc3 = nn.Linear(50, 25)
-        self.drop3 = nn.Dropout(p=0.5)
         self.fc4 = nn.Linear(25, 3)
 
     def forward(self, x):
-        x = F.relu(self.drop1(self.fc1(x)))
-        x = F.relu(self.drop2(self.fc2(x)))
-        x = F.relu(self.drop3(self.fc3(x)))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
         x = self.fc4(x)
         return x
 
@@ -41,17 +38,14 @@ class Policy(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Linear(10, 250)
-        self.drop1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(250, 50)
-        self.drop2 = nn.Dropout(p=0.5)
         self.fc3 = nn.Linear(50, 25)
-        self.drop3 = nn.Dropout(p=0.5)
         self.fc4 = nn.Linear(25, 9)
 
     def forward(self, x):
-        x = F.relu(self.drop1(self.fc1(x)))
-        x = F.relu(self.drop2(self.fc2(x)))
-        x = F.relu(self.drop3(self.fc3(x)))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
         x = self.fc4(x)
         return x
 
@@ -486,5 +480,5 @@ class TicTacToe_MCTS_NN_Node(MCTS_TicTacToe_methods, MCTS_NN_Node):
         state = Game.replace_2d(state)
         state = Game.flatten_state(state)
         x = state + [turn]
-        x = torch.FloatTensor([x])
+        x = torch.tensor([x], dtype=torch.float32)
         return x

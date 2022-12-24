@@ -479,6 +479,7 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
             The current player's turn.
         """
         state = Game.replace_2d(state)
-        x1 = torch.FloatTensor([[state]])  # brackets [batch, input channel] dimensions
-        x2 = torch.FloatTensor([[turn]])
+        # add brackets for [batch, input channel] dimensions
+        x1 = torch.tensor([[state]], dtype=torch.float32)
+        x2 = torch.tensor([[turn]], dtype=torch.float32)
         return x1, x2
