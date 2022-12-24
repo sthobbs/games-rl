@@ -7,7 +7,7 @@ from copy import deepcopy
 class Game():
     """Class for a generic game."""
 
-    def __init__(self, state, agents, turn=0, store_states=False):
+    def __init__(self, state, agents, turn=0, last_move=None, store_states=False):
         """
         Initialize a game.
 
@@ -31,7 +31,7 @@ class Game():
         self.store_states = store_states
         if store_states:
             self.states = []
-        self.last_move = None
+        self.last_move = last_move
 
     def play_turn(self):
         """Play agent's turn (i.e. update the game state and last move attributes)."""

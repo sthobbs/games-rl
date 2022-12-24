@@ -34,17 +34,29 @@ class TicTacToe(Game):
         -1 if the game is over and there is no winner (i.e. a tie).
         agent index (i.e. `turn`) of winning player if a player has won.
         """
-        # if a player has won, return the index of the winning agent
-        for p in range(len(self.agents)):
-            if p == self.state[0][0] == self.state[0][1] == self.state[0][2] or\
-               p == self.state[1][0] == self.state[1][1] == self.state[1][2] or\
-               p == self.state[2][0] == self.state[2][1] == self.state[2][2] or\
-               p == self.state[0][0] == self.state[1][0] == self.state[2][0] or\
-               p == self.state[0][1] == self.state[1][1] == self.state[2][1] or\
-               p == self.state[0][2] == self.state[1][2] == self.state[2][2] or\
-               p == self.state[0][0] == self.state[1][1] == self.state[2][2] or\
-               p == self.state[0][2] == self.state[1][1] == self.state[2][0]:
-                return p
+        # only check the last move if this information is available
+        if self.last_move is not None:
+            x, y = self.last_move
+            val = self.state[x][y]
+            # check if the last move won the game
+            if val == self.state[x][0] == self.state[x][1] == self.state[x][2] or\
+               val == self.state[0][y] == self.state[1][y] == self.state[2][y] or\
+               val == self.state[0][0] == self.state[1][1] == self.state[2][2] or\
+               val == self.state[0][2] == self.state[1][1] == self.state[2][0]:
+                return val
+        # otherwise, check for all possible moves
+        else:
+            # if a player has won, return the index of the winning agent
+            for p in range(len(self.agents)):
+                if p == self.state[0][0] == self.state[0][1] == self.state[0][2] or\
+                p == self.state[1][0] == self.state[1][1] == self.state[1][2] or\
+                p == self.state[2][0] == self.state[2][1] == self.state[2][2] or\
+                p == self.state[0][0] == self.state[1][0] == self.state[2][0] or\
+                p == self.state[0][1] == self.state[1][1] == self.state[2][1] or\
+                p == self.state[0][2] == self.state[1][2] == self.state[2][2] or\
+                p == self.state[0][0] == self.state[1][1] == self.state[2][2] or\
+                p == self.state[0][2] == self.state[1][1] == self.state[2][0]:
+                    return p
         # if the game is not over, return None
         for i in range(3):
             for j in range(3):

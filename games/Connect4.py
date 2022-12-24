@@ -43,19 +43,25 @@ class Connect4(Game):
         -1 if the game is over and there is no winner (i.e. a tie).
         agent index (i.e. `turn`) of winning player if a player has won.
         """
-        # TODO: could optimize by only checking the last move
+        # only check the last move if this information is available
+        if self.last_move is not None:
+            rcs = [self.last_move]  # list of (row, col) tuples
+        # note: we can assume any connect 4 involes the top move in one of the columns
+        # get (row, col) tuples for the top move in each column (with at least one move).
+        else:
+            rcs = []
+            for col in range(7):
+                row = 0
+                # TODO: might be slightly faster to start from bottom
+                while row < 6 and self.state[row][col] == ' ':
+                    row += 1
+                if row == 6:
+                    continue
+                rcs.append((row, col))
         # check for winner
-        for col in range(7):
-            # set row to be the index of the top move in column col.
-            # assume any connect 4 involes the top move in one of the columns
-            # TODO: probably slightly faster to start from bottom
-            row = 0
-            while row < 6 and self.state[row][col] == ' ':
-                row += 1
-            if row == 6:
-                continue
-            val = self.state[row][col]
+        for row, col in rcs:
             # check for 4 in a row through (row, col)
+            val = self.state[row][col]
             # 1) vertical case
             if row < 3 and val == self.state[row+1][col] \
                     == self.state[row+2][col] == self.state[row+3][col]:

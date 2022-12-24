@@ -19,4 +19,5 @@ class MCTS_TicTacToe_methods():
         -1 if the game is over and there is no winner (i.e. a tie).
         agent index (i.e. `turn`) of winning player if a player has won.
         """
-        return TicTacToe(agents=[None, None], state=self.state).result()
+        return TicTacToe(agents=[None, None], state=self.state,
+                         last_move=self.last_move).result()
