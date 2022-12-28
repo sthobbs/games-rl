@@ -1,5 +1,6 @@
 import abc
 import pickle
+import torch
 from tqdm import tqdm
 from games.TicTacToe import TicTacToe
 

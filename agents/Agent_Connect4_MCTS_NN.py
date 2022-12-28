@@ -63,8 +63,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
     guided by neural networks.
     """
 
-    def __init__(self, agent_idx=None, simulations=1000, depth=None,
-                 verbose=False, value=None, policy=None):
+    def __init__(self, agent_idx=None, simulations=1000, depth=None, c=1.41,
+                 tau=0.5, n_random=0, verbose=False, value=None, policy=None):
         """
         Initialize agent with value and policy networks.
 
@@ -77,6 +77,12 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         depth : int
             Depth of tree to search.
             If None, search until game is over.
+        c : float
+            Exploration constant.
+        tau : float
+            Temperature for softmax.
+        n_random : int
+            Number of random moves to make at each node.
         verbose : bool
             Print information about agent's moves. Useful for debugging.
         value : torch.nn.Module
@@ -87,6 +93,9 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         super().__init__(agent_idx)
         self.simulations = simulations  # number of simulations for MCTS
         self.depth = depth
+        self.c = c  # exploration constant
+        self.tau = tau  # temperature for softmax
+        self.n_random = n_random  # number of initial random moves at each node
         self.verbose = verbose
         self.learning_rate = 0.001
         self.momentum = 0.9
@@ -104,6 +113,22 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         else:
             self.policy = policy
         assert hasattr(self, 'policy'), 'Invalid policy network'
+        # game data
+        self.Xv1 = torch.tensor([], dtype=torch.float32)
+        self.Xv2 = torch.tensor([], dtype=torch.float32)
+        self.yv = torch.tensor([], dtype=torch.float32)
+        self.Xp1 = torch.tensor([], dtype=torch.float32)
+        self.Xp2 = torch.tensor([], dtype=torch.float32)
+        self.yp = torch.tensor([], dtype=torch.long)
+
+    def deepcopy_without_data(self):
+        """
+        Return deepcopy of agent without game data.
+        """
+        agent = Agent_Connect4_MCTS_NN()
+        agent.__dict__ = {k: v for k, v in self.__dict__.items() \
+            if k not in ['Xv1', 'Xv2' 'yv', 'Xp1', 'Xp2', 'yp']}
+        return deepcopy(agent)
 
     def iter_minibatches(self, X1, X2, y, batch_size=32):
         """
@@ -150,10 +175,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         optimizer = optim.SGD(model.parameters(), lr=self.learning_rate,
                               momentum=self.momentum)
         # randomly permute data
-        idx = torch.randperm(y.shape[0])
-        X1 = X1[idx].view(X1.size())
-        X2 = X2[idx].view(X2.size())
-        y = y[idx].view(y.size())
+        X1, X2, y = self.random_permute(X1, X2, y)
         # iterate over minibatches
         for X1_, X2_, y_ in self.iter_minibatches(X1, X2, y, batch_size=batch_size):
             # zero the parameter gradients
@@ -165,22 +187,42 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             loss.backward()
             optimizer.step()
 
-    def fit_model(self, X_train1, X_train2, y_train, X_test1, X_test2, y_test,
+    # TODO: move to agent or utils (need to generalize to list of tensors)
+    def random_permute(self, X1, x2, y):
+        """
+        Randomly permute data.
+
+        Parameters
+        ----------
+        X1 : torch.Tensor
+            Game state input data.
+        X2 : torch.Tensor
+            Agent turn input data.
+        y : torch.Tensor
+            Output data.
+        """
+        idx = torch.randperm(y.shape[0])
+        X1 = X1[idx].view(X1.size())
+        X2 = X2[idx].view(X2.size())
+        y = y[idx].view(y.size())
+        return X1, x2, y
+
+    def fit_model(self, X1_train, X2_train, y_train, X1_test, X2_test, y_test,
                   model, early_stopping=None, verbose=10, num_epochs=10):
         """
         Fit either value or policy network for num_epochs epochs.
 
         Parameters
         ----------
-        X_train1 : torch.Tensor
+        X1_train : torch.Tensor
             Game state input data for training.
-        X_train2 : torch.Tensor
+        X2_train : torch.Tensor
             Agent turn input data for training.
         y_train : torch.Tensor
             Output data for training.
-        X_test1 : torch.Tensor
+        X1_test : torch.Tensor
             Game state input data for testing.
-        X_test2 : torch.Tensor
+        X2_test : torch.Tensor
             Agent turn input data for testing.
         y_test : torch.Tensor
             Output data for testing.
@@ -199,14 +241,14 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         # loop over the dataset multiple times
         for epoch in range(num_epochs):  # loop over the dataset multiple times
             # fit 1 epoch
-            self.fit_epoch(X_train1, X_train2, y_train, model)
+            self.fit_epoch(X1_train, X2_train, y_train, model)
             # print metrics
-            X_train1 = torch.reshape(X_train1, (-1, 1, 6, 7))
-            y_pred = model(X_train1, X_train2)
+            X1_train = torch.reshape(X1_train, (-1, 1, 6, 7))
+            y_pred = model(X1_train, X2_train)
             y_true = y_train
             train_loss = criterion(y_pred, y_true).item()
-            X_test1 = torch.reshape(X_test1, (-1, 1, 6, 7))
-            y_pred = model(X_test1, X_test2)
+            X1_test = torch.reshape(X1_test, (-1, 1, 6, 7))
+            y_pred = model(X1_test, X2_test)
             y_true = y_test
             test_loss = criterion(y_pred, y_true).item()
             if epoch % verbose == 0:  # print metrics
@@ -241,7 +283,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
         """
         play n games against different opponents, randomly selected from ops,
-        and generate data from these games for training/testing.
+        and generate data from these games.
 
         Parameters
         ----------
@@ -287,19 +329,25 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             yp.extend(yp_)
         # reformat data (since we need multiple input tensors)
         Xv1 = [state for state, _ in Xv]
-        Xv2 = [[turn] for _, turn in Xv]
+        Xv2 = [turn for _, turn in Xv]
         Xp1 = [state for state, _ in Xp]
-        Xp2 = [[turn] for _, turn in Xp]
+        Xp2 = [turn for _, turn in Xp]
         # augment data (since Connect 4 is invariant to vertical reflections)
         Xv1, Xv2, yv, Xp1, Xp2, yp = self.augment_data(Xv1, Xv2, yv, Xp1, Xp2, yp)
         # convert to tensors
-        Xv1 = torch.FloatTensor(Xv1)
-        Xv2 = torch.FloatTensor(Xv2)
-        yv = torch.FloatTensor(yv)
-        Xp1 = torch.FloatTensor(Xp1)
-        Xp2 = torch.FloatTensor(Xp2)
-        yp = torch.LongTensor(yp)
-        return Xv1, Xv2, yv, Xp1, Xp2, yp
+        Xv1 = torch.tensor(Xv, dtype=torch.float32)
+        Xv2 = torch.tensor(Xv, dtype=torch.float32)
+        yv = torch.tensor(yv, dtype=torch.float32)
+        Xp1 = torch.tensor(Xp, dtype=torch.float32)
+        Xp2 = torch.tensor(Xp, dtype=torch.float32)
+        yp = torch.tensor(yp, dtype=torch.long)
+        # append to game data
+        self.Xv1 = torch.cat([self.Xv1, Xv1])
+        self.Xv2 = torch.cat([self.Xv2, Xv2])
+        self.yv = torch.cat([self.yv, yv])
+        self.Xp1 = torch.cat([self.Xp1, Xp1])
+        self.Xp2 = torch.cat([self.Xp2, Xp2])
+        self.yp = torch.cat([self.yp, yp])
 
     def augment_data(self, Xv1, Xv2, yv, Xp1, Xp2, yp):
         """
@@ -354,40 +402,45 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         y_ = 6 - y
         return X_, y_
 
-    def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, **kwargs):
+    def fit(self, refit_datapoints=200000, test_size=0.3, **kwargs):
         """
-        Play n games and refit NNs.
+        Fit the value and policy networks.
 
         Parameters
         ----------
-        n : int
-            Number of games to play.
-        ops : list
-            List of agents to play against.
-        datapoints_per_game : int
-            Number of data points to generate per game (although the policy network may
-            have slightly less, because if the final game state is selected, it has no
-            next move to predict.)
+        refit_datapoints : int
+            Number of data points to use for refitting.
         test_size : float
             Fraction of data to use for testing.
         """
         # generate training and testing data from different games to avoid leakage
         assert 0 < test_size < 1, 'invalid test size'
-        n_train = int((1 - test_size) * n)
-        n_test = int(test_size * n)
-        print('generating training data')
-        Xv_train1, Xv_train2, yv_train, Xp_train1, Xp_train2, yp_train = \
-            self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
-        print('generating test data')
-        Xv_test1, Xv_test2, yv_test, Xp_test1, Xp_test2, yp_test = \
-            self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
+        # get most recent data
+        Xv1 = self.Xv1[-refit_datapoints:]
+        Xv2 = self.Xv2[-refit_datapoints:]
+        yv = self.yv[-refit_datapoints:]
+        Xp1 = self.Xp1[-refit_datapoints:]
+        Xp2 = self.Xp2[-refit_datapoints:]
+        yp = self.yp[-refit_datapoints:]
+        # permute data
+        Xv1, Xv2, yv = self.random_permute(Xv1, Xv2, yv)
+        Xp1, Xp2, yp = self.random_permute(Xp1, Xp2, yp)
+        # split data into training and testing sets
+        split = int(test_size * yv.shape[0])
+        Xv1_train, Xv1_test = Xv1[:split], Xv1[split:]
+        Xv2_train, Xv2_test = Xv2[:split], Xv2[split:]
+        yv_train, yv_test = yv[:split], yv[split:]
+        split = int(test_size * yp.shape[0])
+        Xp1_train, Xp1_test = Xp1[:split], Xp1[split:]
+        Xp2_train, Xp2_test = Xp2[:split], Xp2[split:]
+        yp_train, yp_test = yp[:split], yp[split:]
         # fit value network
         print('fitting value network')
-        self.fit_model(Xv_train1, Xv_train2, yv_train, Xv_test1, Xv_test2, yv_test,
+        self.fit_model(Xv1_train, Xv2_train, yv_train, Xv1_test, Xv2_test, yv_test,
                        model=self.value, **kwargs)
         # fit policy network
         print('fitting policy network')
-        self.fit_model(Xp_train1, Xp_train2, yp_train, Xp_test1, Xp_test2, yp_test,
+        self.fit_model(Xp1_train, Xp2_train, yp_train, Xp1_test, Xp2_test, yp_test,
                        model=self.policy, **kwargs)
 
     def play_turn(self, state):
@@ -401,7 +454,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             The current game state.
         """
         mcts = Connect4_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx,
-                                     depth=self.depth)
+                                     depth=self.depth, c=self.c, tau=self.tau,
+                                     n_random=self.n_random)
         mcts.simulations(self.simulations)  # play simulations
         move = mcts.best_move(verbose=self.verbose)  # find best most
         state = self.play_move(state, move)  # play move
@@ -418,7 +472,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         turn : int
             the current turn
         """
-        return [state, turn]
+        return [state, [turn]]
 
 
 class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):

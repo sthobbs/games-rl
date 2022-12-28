@@ -7,7 +7,7 @@ class MCTS_Node():
     """Monte Carlo Tree Search Node."""
 
     def __init__(self, state, parent=None, turn=None, last_move=None,
-                 tau=0.25, *args, **kwargs):
+                 c=1.41, tau=0.25, n_random=10, *args, **kwargs):
         """
         Initialize a MCTS Node.
 
@@ -21,6 +21,8 @@ class MCTS_Node():
             Agent index of current player
         last_move : any
             Most recent move that updated the game state
+        c : float
+            c > 0. exploration constant, sqrt(2) is common for simple MCTS
         tau : float
             tau > 0. pick move with probability p**(1/tau)
         args : tuple
@@ -34,9 +36,10 @@ class MCTS_Node():
         self.w = 0  # num wins from current node
         self.t = 0  # num ties from current node
         self.n = 1  # num visits to current node
-        self.c = 1.41  # hyperparameter, sqrt(2) is common for simple MCTS
+        self.c = c  # hyperparameter, sqrt(2) is common for simple MCTS
         self.last_move = last_move  # most recent move that updated the game state
         self.tau = tau  # tau > 0. pick move with probability p**(1/tau)
+        self.n_random = n_random # number of random moves to make at each node
         if parent is None:  # if root
             assert turn is not None, 'turn must be specified for the root'
             self.turn = turn
@@ -136,6 +139,7 @@ class MCTS_Node():
             new_state = self.play_move(move)
             self.children.append(
                 self.__class__(state=new_state, parent=self, last_move=move,
+                               c=self.c, tau=self.tau, n_random=self.n_random,
                                *self.args, **self.kwargs, **kwargs))
 
     def action_value(self):
@@ -164,8 +168,8 @@ class MCTS_Node():
             self.winner = result
             self.traverse_up()
             return
-        # pick random child for the first 10 simulations
-        if self.n <= 10:
+        # pick random child for the first n_random simulations at this node
+        if self.n <= self.n_random:
             child = random.choice(self.children)
         # find optimal child based on action values
         else:

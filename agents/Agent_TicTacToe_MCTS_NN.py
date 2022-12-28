@@ -56,8 +56,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     guided by neural networks.
     """
 
-    def __init__(self, agent_idx=None, simulations=1000, depth=None, verbose=False,
-                 value=None, policy=None):
+    def __init__(self, agent_idx=None, simulations=1000, depth=None, c=1.41,
+                 tau=0.5, n_random=0, verbose=False, value=None, policy=None):
         """
         Initialize agent with value and policy networks.
 
@@ -70,6 +70,12 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         depth : int
             Depth of tree to search.
             If None, search until game is over.
+        c : float
+            Exploration constant.
+        tau : float
+            Temperature for softmax.
+        n_random : int
+            Number of random moves to make at each node.
         verbose : bool
             Print information about agent's moves. Useful for debugging.
         value : torch.nn.Module
@@ -80,6 +86,9 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         super().__init__(agent_idx)
         self.simulations = simulations  # number of simulations for MCTS
         self.depth = depth
+        self.c = c  # exploration constant
+        self.tau = tau  # temperature for softmax
+        self.n_random = n_random  # number of initial random moves at each node
         self.verbose = verbose
         self.learning_rate = 0.001
         self.momentum = 0.9
@@ -97,6 +106,19 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         else:
             self.policy = policy
         assert hasattr(self, 'policy'), 'Invalid policy network'
+        # game data
+        self.Xv = torch.tensor([], dtype=torch.float32)
+        self.yv = torch.tensor([], dtype=torch.float32)
+        self.Xp = torch.tensor([], dtype=torch.float32)
+        self.yp = torch.tensor([], dtype=torch.long)
+
+    def deepcopy_without_data(self):
+        """
+        Return deepcopy of agent without game data.
+        """
+        agent = Agent_TicTacToe_MCTS_NN()
+        agent.__dict__ = {k: v for k, v in self.__dict__.items() if k not in ['Xv', 'yv', 'Xp', 'yp']}
+        return deepcopy(agent)
 
     def iter_minibatches(self, X, y, batch_size=32):
         """
@@ -138,9 +160,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         optimizer = optim.SGD(model.parameters(), lr=self.learning_rate,
                               momentum=self.momentum)
         # randomly permute data
-        idx = torch.randperm(X.shape[0])
-        X = X[idx].view(X.size())
-        y = y[idx].view(y.size())
+        X, y = self.random_permute(X, y)
         # iterate over minibatches
         for X_chunk, y_chunk in self.iter_minibatches(X, y, batch_size=batch_size):
             # zero the parameter gradients
@@ -150,6 +170,23 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             loss = criterion(outputs, y_chunk)
             loss.backward()
             optimizer.step()
+
+    # TODO: move to agent or utils (need to generalize to list of tensors)
+    def random_permute(self, X, y):
+        """
+        Randomly permute data.
+
+        Parameters
+        ----------
+        X : torch.Tensor
+            Input data.
+        y : torch.Tensor
+            Output data.
+        """
+        idx = torch.randperm(y.shape[0])
+        X = X[idx].view(X.size())
+        y = y[idx].view(y.size())
+        return X, y
 
     def fit_model(self, X_train, y_train, X_test, y_test, model, early_stopping=None,
                   verbose=10, num_epochs=10):
@@ -220,7 +257,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
         """
         play n games against different opponents, randomly selected from ops,
-        and generate data from these games for training/testing.
+        and generate data from these games.
 
         Parameters
         ----------
@@ -253,11 +290,15 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         # augment data (with rotations and reflections)
         Xv, yv, Xp, yp = self.augment_data(Xv, yv, Xp, yp)
         # convert to tensors
-        Xv = torch.FloatTensor(Xv)
-        yv = torch.FloatTensor(yv)
-        Xp = torch.FloatTensor(Xp)
-        yp = torch.LongTensor(yp)
-        return Xv, yv, Xp, yp
+        Xv = torch.tensor(Xv, dtype=torch.float32)
+        yv = torch.tensor(yv, dtype=torch.float32)
+        Xp = torch.tensor(Xp, dtype=torch.float32)
+        yp = torch.tensor(yp, dtype=torch.long)
+        # append to game data
+        self.Xv = torch.cat([self.Xv, Xv])
+        self.yv = torch.cat([self.yv, yv])
+        self.Xp = torch.cat([self.Xp, Xp])
+        self.yp = torch.cat([self.yp, yp])
 
     def augment_data(self, Xv, yv, Xp, yp):
         """
@@ -369,33 +410,33 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         y_ = [2, 1, 0, 5, 4, 3, 8, 7, 6][y]
         return X_, y_
 
-    def play_and_refit(self, n, ops, datapoints_per_game=1, test_size=0.3, **kwargs):
+    def fit(self, refit_datapoints=200000, test_size=0.3, **kwargs):
         """
-        Play n games and refit NNs.
+        Fit the value and policy networks.
 
         Parameters
         ----------
-        n : int
-            Number of games to play.
-        ops : list
-            List of agents to play against.
-        datapoints_per_game : int
-            Number of data points to generate per game (although the policy network may
-            have slightly less, because if the final game state is selected, it has no
-            next move to predict.)
+        refit_datapoints : int
+            Number of data points to use for refitting.
         test_size : float
             Fraction of data to use for testing.
         """
-        # generate training and testing data from different games to avoid leakage
         assert 0 < test_size < 1, 'invalid test size'
-        n_train = int((1 - test_size) * n)
-        n_test = int(test_size * n)
-        print('generating training data')
-        Xv_train, yv_train, Xp_train, yp_train = \
-            self.gen_data_diff_ops(n_train, ops, datapoints_per_game=datapoints_per_game)
-        print('generating test data')
-        Xv_test,  yv_test,  Xp_test,  yp_test = \
-            self.gen_data_diff_ops(n_test, ops, datapoints_per_game=datapoints_per_game)
+        # get most recent data
+        Xv = self.Xv[-refit_datapoints:]
+        yv = self.yv[-refit_datapoints:]
+        Xp = self.Xp[-refit_datapoints:]
+        yp = self.yp[-refit_datapoints:]
+        # permute data
+        Xv, yv = self.random_permute(Xv, yv)
+        Xp, yp = self.random_permute(Xp, yp)
+        # split data into training and testing sets
+        split = int(test_size * yv.shape[0])
+        Xv_train, Xv_test = Xv[:split], Xv[split:]
+        yv_train, yv_test = yv[:split], yv[split:]
+        split = int(test_size * yp.shape[0])
+        Xp_train, Xp_test = Xp[:split], Xp[split:]
+        yp_train, yp_test = yp[:split], yp[split:]
         # fit value network
         print('fitting value network')
         self.fit_model(Xv_train, yv_train, Xv_test, yv_test, model=self.value, **kwargs)
@@ -414,7 +455,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             The current game state.
         """
         mcts = TicTacToe_MCTS_NN_Node(agent=self, state=state, turn=self.agent_idx,
-                                      depth=self.depth)
+                                      depth=self.depth, c=self.c, tau=self.tau,
+                                      n_random=self.n_random)
         mcts.simulations(self.simulations)  # play simulations
         move = mcts.best_move(verbose=self.verbose)  # find best most
         state = self.play_move(state, move)  # play move

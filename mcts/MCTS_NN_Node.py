@@ -1,12 +1,14 @@
 import abc
 import random
+import numpy as np
 from mcts.MCTS_Node import MCTS_Node
 
 
 class MCTS_NN_Node(MCTS_Node):
     """Node for Monte Carlo Tree Search that uses Neural Networks to guide the search."""
 
-    def __init__(self, state, depth=None, *args, **kwargs):
+    def __init__(self, state, c=1.41, tau=0.5, depth=None, n_random=0,
+                 epsilon=0.25, rand_exp_mean=0.03, *args, **kwargs):
         """
         Initialize node.
 
@@ -16,14 +18,21 @@ class MCTS_NN_Node(MCTS_Node):
             Game state representation
         depth : int
             Search depth for MCTS
+        epsilon : float
+            epsilon-greedy exploration
+        rand_exp_mean : float
+            mean of random exploration
         """
         super().__init__(state, *args, **kwargs)
         self.val_w_sum = 0  # sum of P(win) value network predictions of terminal nodes
         self.val_t_sum = 0  # sum of P(tie) value network predictions of terminal nodes
         self.val_l_sum = 0  # sum of P(loss) value network predictions of terminal nodes
-        self.c = 1.41
-        self.tau = 0.5
+        self.c = c  # exploraton constant, sqrt(2) is common for simple MCTS
+        self.tau = tau  # tau > 0. pick move with probability p**(1/tau)
         self.depth = depth  # search depth for MCTS
+        self.n_random = n_random  # number of random moves to make at each node
+        self.epsilon = epsilon  # epsilon-greedy exploration
+        self.rand_exp_mean = rand_exp_mean  # mean of random exploration
         self.winner = None  # index of winning agent (-1 => tie, None => game not over)
 
     def __str__(self):
@@ -59,8 +68,10 @@ class MCTS_NN_Node(MCTS_Node):
         self.N = self.parent.n
         # Q has L - W  in the numerator because it's from the opponent's perspective
         Q = (self.val_l_sum - self.val_w_sum) / self.n
-        # U = c * p * sqrt(N) / (n+1)
-        U = self.c * self.policy_predict() * self.N**0.5 / (self.n + 1)
+        P = (1 - self.epsilon) * self.policy_predict() \
+            + self.epsilon * np.random.exponential(self.rand_exp_mean)
+        # U = c * P * sqrt(N) / (n+1)
+        U = self.c * P * self.N**0.5 / (self.n + 1)
         return Q + U
 
     def traverse_down(self):
@@ -82,8 +93,8 @@ class MCTS_NN_Node(MCTS_Node):
             self.val_l, self.val_t, self.val_w = self.value_predict()
             self.traverse_up()
             return
-        # pick random child for the first 10 simulations
-        if self.n <= 10:
+        # pick random child for the first n_random simulations at this node
+        if self.n <= self.n_random:
             child = random.choice(self.children)
         # find optimal child based on action values
         else:
