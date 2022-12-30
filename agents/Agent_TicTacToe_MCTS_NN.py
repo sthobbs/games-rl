@@ -213,6 +213,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         num_epochs : int
             Number of epochs to train for.
         """
+        assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
         if early_stopping is None:
             early_stopping = float("inf")
         # loop over the dataset multiple times
@@ -243,16 +244,18 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             if epoch > min_log_loss_epoch + early_stopping:
                 break
         # print optimal epoch
-        print("optimal epoch:")
-        epoch = min_log_loss_epoch
-        train_loss, test_loss = min_log_loss_train, min_log_loss
-        print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
-        # copy optimal model to agent
-        assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
-        if model.name == 'value':
-            self.value = min_log_loss_model
-        elif model.name == 'policy':
-            self.policy = min_log_loss_model
+        if early_stopping < float("inf"):
+            print("optimal epoch:")
+            epoch = min_log_loss_epoch
+            train_loss, test_loss = min_log_loss_train, min_log_loss
+            print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
+            # copy optimal model to agent
+            if model.name == 'value':
+                self.value = min_log_loss_model
+            elif model.name == 'policy':
+                self.policy = min_log_loss_model
+        print("")
+
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
         """

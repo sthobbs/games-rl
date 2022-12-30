@@ -188,7 +188,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             optimizer.step()
 
     # TODO: move to agent or utils (need to generalize to list of tensors)
-    def random_permute(self, X1, x2, y):
+    def random_permute(self, X1, X2, y):
         """
         Randomly permute data.
 
@@ -205,7 +205,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         X1 = X1[idx].view(X1.size())
         X2 = X2[idx].view(X2.size())
         y = y[idx].view(y.size())
-        return X1, x2, y
+        return X1, X2, y
 
     def fit_model(self, X1_train, X2_train, y_train, X1_test, X2_test, y_test,
                   model, early_stopping=None, verbose=10, num_epochs=10):
@@ -236,6 +236,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         num_epochs : int
             Number of epochs to fit.
         """
+        assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
         if early_stopping is None:
             early_stopping = float("inf")
         # loop over the dataset multiple times
@@ -268,17 +269,17 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             if epoch > min_log_loss_epoch + early_stopping:
                 break
         # print optimal epoch
-        print("optimal epoch:")
-        epoch = min_log_loss_epoch
-        train_loss, test_loss = min_log_loss_train, min_log_loss
-        print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
-        # copy optimal model to agent
-        assert model.name in ['value', 'policy'], "model name not in ['value', 'policy']"
-        if model.name == 'value':
-            self.value = min_log_loss_model
-        elif model.name == 'policy':
-            self.policy = min_log_loss_model
-        return
+        if early_stopping < float("inf"):
+            print("optimal epoch:")
+            epoch = min_log_loss_epoch
+            train_loss, test_loss = min_log_loss_train, min_log_loss
+            print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
+            # copy optimal model to agent
+            if model.name == 'value':
+                self.value = min_log_loss_model
+            elif model.name == 'policy':
+                self.policy = min_log_loss_model
+        print("")
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
         """
@@ -335,11 +336,11 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         # augment data (since Connect 4 is invariant to vertical reflections)
         Xv1, Xv2, yv, Xp1, Xp2, yp = self.augment_data(Xv1, Xv2, yv, Xp1, Xp2, yp)
         # convert to tensors
-        Xv1 = torch.tensor(Xv, dtype=torch.float32)
-        Xv2 = torch.tensor(Xv, dtype=torch.float32)
+        Xv1 = torch.tensor(Xv1, dtype=torch.float32)
+        Xv2 = torch.tensor(Xv2, dtype=torch.float32)
         yv = torch.tensor(yv, dtype=torch.float32)
-        Xp1 = torch.tensor(Xp, dtype=torch.float32)
-        Xp2 = torch.tensor(Xp, dtype=torch.float32)
+        Xp1 = torch.tensor(Xp1, dtype=torch.float32)
+        Xp2 = torch.tensor(Xp2, dtype=torch.float32)
         yp = torch.tensor(yp, dtype=torch.long)
         # append to game data
         self.Xv1 = torch.cat([self.Xv1, Xv1])
