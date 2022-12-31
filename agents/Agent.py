@@ -1,6 +1,5 @@
 import abc
 import pickle
-import torch
 from tqdm import tqdm
 from games.TicTacToe import TicTacToe
 import logging
@@ -8,7 +7,7 @@ import logging
 class Agent():
     """Abstract class for Agents to play games."""
 
-    def __init__(self, agent_idx, logger=None, log_file=None):
+    def __init__(self, agent_idx=0, logger=None, **kwargs):
         """
         Initialize the Agent with an agent index.
 
@@ -18,16 +17,10 @@ class Agent():
             the agent index (which often specifies how to mark the game state).
         logger : logging.Logger, optional
             the logger to use. If None, a new logger is created.
-        log_file : str, optional
-            the file to log to. If None, no file logging is performed.
         """
         self.agent_idx = agent_idx
         self.game = TicTacToe
-        # set up logging
-        if logger is None:
-            self.setup_logger(log_file)
-        else:
-            self.logger = logger
+        self.logger = logger
 
     def setup_logger(self, log_file=None):
         """
