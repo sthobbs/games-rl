@@ -5,11 +5,10 @@ import torch
 import torch.nn.functional as F
 import random
 import pickle
-import matplotlib.pyplot as plt
 random.seed(20)
 
 output_dir = Path('training_output/Connect4')
-
+n_jobs = 5
 
 def log_stats(p):
     X1 = torch.FloatTensor([[[[-1, -1, -1, -1, -1, -1, -1],
@@ -35,7 +34,7 @@ def train_and_evaluate():
 
     # initial model evaluation & stat
     performances = []
-    per = evaluate_agent(p)
+    per = evaluate_agent(p, n_jobs=n_jobs)
     performances.append(per)
     log_stats(p)
 
@@ -55,7 +54,7 @@ def train_and_evaluate():
         ops.append(p.deepcopy_without_data())
         
         # evaluate against random move agent and mcts agent
-        per = evaluate_agent(p)
+        per = evaluate_agent(p, n_jobs=n_jobs)
         performances.append(per)
         log_stats(p)
 
@@ -63,7 +62,7 @@ def train_and_evaluate():
     p.logger.info('Evaluate agent with tau=inf')
     tau = p.tau
     p.tau = None
-    evaluate_agent(p)
+    evaluate_agent(p, n_jobs=n_jobs)
     p.tau = tau
 
     # plot performance

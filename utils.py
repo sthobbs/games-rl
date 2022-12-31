@@ -37,7 +37,7 @@ def plot_performance(performances, output_dir, games_per_iteration=1000):
     plt.close()
 
 
-def evaluate_agent(p, n=100):
+def evaluate_agent(p, n=100, n_jobs=1):
     """
     Evaluate agent against a random move agent and a mcts agent.
     
@@ -60,12 +60,12 @@ def evaluate_agent(p, n=100):
     # play games and get performance (loss, tie, win counts)
     p.logger.info(f'Evaluating Agent:')
     p.logger.info(f'going 1st vs random')
-    per1 = p.gen_data(n, agents=[p, r], return_results=True)  # going 1st vs random
+    per1 = p.gen_data(n, agents=[p, r], return_results=True, n_jobs=n_jobs)  # going 1st vs random
     p.logger.info(f'going 2nd vs random')
-    per2 = p.gen_data(n, agents=[r, p], return_results=True)  # going 2nd vs random
+    per2 = p.gen_data(n, agents=[r, p], return_results=True, n_jobs=n_jobs)  # going 2nd vs random
     p.logger.info(f'going 1st vs mcts')
-    per3 = p.gen_data(n, agents=[p, m], return_results=True)  # going 1st vs mcts
+    per3 = p.gen_data(n, agents=[p, m], return_results=True, n_jobs=n_jobs)  # going 1st vs mcts
     p.logger.info(f'going 2nd vs mcts')
-    per4 = p.gen_data(n, agents=[m, p], return_results=True)  # going 2nd vs mcts
+    per4 = p.gen_data(n, agents=[m, p], return_results=True, n_jobs=n_jobs)  # going 2nd vs mcts
     performance = [per1, per2, per3, per4]
     return performance

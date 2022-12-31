@@ -3,6 +3,8 @@ import pickle
 from tqdm import tqdm
 from games.TicTacToe import TicTacToe
 import logging
+from multiprocessing import Pool
+
 
 class Agent():
     """Abstract class for Agents to play games."""
@@ -109,12 +111,63 @@ class Agent():
         with open(path) as f:
             self.__dict__ = pickle.load(f).__dict__
         self.logger.info(f"loaded agent from {path}")
-        
 
-    # TODO?: parallelize this
-    # TODO?: might move this out of the agent class
+    def _gen_data_game(self, args):
+        """
+        Generate training data for one game by having agents play against each other.
+        
+        Parameters
+        ----------
+        args : tuple
+            tuple of arguments to pass to the function, in the following order:
+                agents (args[0]) : list
+                    list of agents to play the game
+                player (args[1]) : int
+                    index of agent which we are generating data for.
+                    if None, data is picked randomly from all players
+                datapoints_per_game (args[2]) : int
+                    number of datapoints to generate per game
+                one_hot (args[3]) : bool
+                    if True, encode the game result as a one-hot vector
+        """
+        agents, player, datapoints_per_game, one_hot = args
+        Xv, Yv, Xp, Yp = [], [], [], []
+        # set up game
+        g = self.game(agents, store_states=True)
+        # play game
+        g.play_game(pprint=False)
+        # get random position from game, and result (i.e. which agent won, or draw)
+        for _ in range(datapoints_per_game):
+            state, turn, move, winner = g.get_data_point(player=player)
+            # add to datasets
+            x = self.format_X_datapoint(state, turn)
+            # set value network response
+            if one_hot:
+                if turn == winner:  # win
+                    yv = [0, 0, 1]
+                elif winner == -1:  # tie
+                    yv = [0, 1, 0]
+                else:  # loss
+                    yv = [1, 0, 0]
+            else:
+                if turn == winner:  # win
+                    yv = 1
+                elif winner == -1:  # tie
+                    yv = 0
+                else:  # loss
+                    yv = -1
+            # if there is a next move (i.e. not at the terminal game state)
+            if move:
+                yp = move
+                Xp.append(x)
+                Yp.append(yp)
+            Xv.append(x)
+            Yv.append(yv)
+        return Xv, Yv, Xp, Yp, winner
+
     def gen_data(self, n, agents, player=None, return_results=False,
-                 datapoints_per_game=1, verbose=True, one_hot=True):
+                 datapoints_per_game=1, verbose=True, one_hot=True,
+                 n_jobs=1):
         """
         Generate training data by having agents play against each other.
 
@@ -135,6 +188,8 @@ class Agent():
             if True, log win, tie, and loss counts
         one_hot : bool
             if True, encode the game result as a one-hot vector
+        n_jobs : int
+            number of processes to use for parallelization
 
         Returns
         -------
@@ -147,46 +202,49 @@ class Agent():
         Yp : list
             list of moves
         """
+
         # set agent indexes
         for i, agent in enumerate(agents):
             agent.agent_idx = i
+
         twl = [0, 0, 0]  # tie-win-loss count for agents[0]
         Xv, Yv, Xp, Yp = [], [], [], []
-        for _ in tqdm(range(n), disable=(not verbose)):
-            # set up game
-            g = self.game(agents, store_states=True)
-            # play game
-            g.play_game(pprint=False)
-            # get random position from game, and result (i.e. which agent won, or draw)
-            for _ in range(datapoints_per_game):
-                state, turn, move, winner = g.get_data_point(player=player)
-                # add to datasets
-                x = self.format_X_datapoint(state, turn)
-                # set value network response
-                if one_hot:
-                    if turn == winner:  # win
-                        yv = [0, 0, 1]
-                    elif winner == -1:  # tie
-                        yv = [0, 1, 0]
-                    else:  # loss
-                        yv = [1, 0, 0]
-                else:
-                    if turn == winner:  # win
-                        yv = 1
-                    elif winner == -1:  # tie
-                        yv = 0
-                    else:  # loss
-                        yv = -1
-                # if there is a next move (i.e. not at the terminal game state)
-                if move:
-                    yp = move
-                    Xp.append(x)
-                    Yp.append(yp)
-                Xv.append(x)
-                Yv.append(yv)
-            # update tie-win-loss count for agents[0]
-            twl[winner+1] += 1
-        # set number of ties, wins, and losses
+
+        # parallelize games
+        if n_jobs > 1:
+            # set up args for parallel games
+            args = (agents, player, datapoints_per_game, one_hot)
+            arg_list = [args] * n
+            
+            # if agent stores data, then make a copy without data before passing to pool
+            if hasattr(self, "deepcopy_without_data"):
+                agent_copy = self.deepcopy_without_data()
+            else:
+                agent_copy = self
+            
+            # run games in parallel
+            with Pool(n_jobs) as pool:
+                game_data = tqdm(pool.imap(agent_copy._gen_data_game, arg_list), total=n)
+                # collect data
+                for Xv_, Yv_, Xp_, Yp_, winner in game_data:
+                    Xv.extend(Xv_)
+                    Yv.extend(Yv_)
+                    Xp.extend(Xp_)
+                    Yp.extend(Yp_)
+                    # update tie-win-loss count for agents[0]
+                    twl[winner+1] += 1
+        # run games sequentially
+        else:
+            for _ in tqdm(range(n), disable=(not verbose)):
+                args = (agents, player, datapoints_per_game, one_hot)
+                Xv_, Yv_, Xp_, Yp_, winner = self._gen_data_game(args)
+                Xv.extend(Xv_)
+                Yv.extend(Yv_)
+                Xp.extend(Xp_)
+                Yp.extend(Yp_)
+                # update tie-win-loss count for agents[0]
+                twl[winner+1] += 1
+        # set number of ties, wins, and losses for current agent
         t = twl[0]
         if self.agent_idx == 0:
             l, w = twl[2], twl[1]
