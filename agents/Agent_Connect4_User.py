@@ -1,4 +1,5 @@
 from agents.Agent_Connect4 import Agent_Connect4
+import sys
 
 
 class Agent_Connect4_User(Agent_Connect4):
@@ -31,10 +32,13 @@ class Agent_Connect4_User(Agent_Connect4):
         valid_cols = [col+1 for _, col in valid]
         while move not in valid_cols:
             move = input("Enter Valid Move 1-7: ")
+            if move in ['q', 'quit', 'exit']:
+                print('Exiting...')
+                sys.exit(0)
             try:
                 move = int(move)
             except ValueError:
-                ...  # TODO: some sort of quit/exit command
+                print("Invalid Move, Try Again")
         move -= 1
         move = [(i, j) for i, j in valid if j == move][0]  # convert col to (row, col)
         # play move

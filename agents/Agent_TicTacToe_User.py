@@ -1,4 +1,5 @@
 from agents.Agent_TicTacToe import Agent_TicTacToe
+import sys
 
 
 class Agent_TicTacToe_User(Agent_TicTacToe):
@@ -30,7 +31,14 @@ class Agent_TicTacToe_User(Agent_TicTacToe):
         move = None
         flat_valid_moves = {3*i + j + 1 for i, j in valid}
         while move not in flat_valid_moves:
-            move = int(input('Enter Valid Move 1-9: \n1 2 3\n4 5 6\n7 8 9\n'))
+            move = input('Enter Valid Move 1-9: \n1 2 3\n4 5 6\n7 8 9\n')
+            if move in ['q', 'quit', 'exit']:
+                print('Exiting...')
+                sys.exit(0)
+            try:
+                move = int(move)
+            except ValueError:
+                print("Invalid Move, Try Again")
         i, j = divmod(move-1, 3)
         move = (i, j)
         # play move
