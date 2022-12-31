@@ -1,23 +1,26 @@
 from pathlib import Path
-from agents.Agent_TicTacToe_MCTS_NN import Agent_TicTacToe_MCTS_NN
+from agents.Agent_Connect4_MCTS_NN import Agent_Connect4_MCTS_NN
 from utils import plot_performance, evaluate_agent
 import torch
 import torch.nn.functional as F
 import random
 import pickle
+import matplotlib.pyplot as plt
 random.seed(20)
 
-output_dir = Path('training_output/TicTacToe')
+output_dir = Path('training_output/Connect4')
 
 
 def log_stats(p):
-    X = torch.FloatTensor([[-1, -1, -1, -1, -1, -1, -1, -1, -1, 0]])  # empty board
-    p.logger.info(f'loss, tie, win prob: {F.softmax(p.value(X), dim=1)[0]}')
-    x = F.softmax(p.policy(X), dim=1)[0] 
-    p.logger.info(f'first move probs: {x}')
-    p.logger.info(f'avg corner prob: {(x[0] + x[2] + x[6] + x[8]) / 4}')
-    p.logger.info(f'avg edge prob: {(x[1] + x[3] + x[5] + x[7]) / 4}')
-    p.logger.info(f'center prob: {x[4]}')
+    X1 = torch.FloatTensor([[[[-1, -1, -1, -1, -1, -1, -1],
+                              [-1, -1, -1, -1, -1, -1, -1],
+                              [-1, -1, -1, -1, -1, -1, -1],
+                              [-1, -1, -1, -1, -1, -1, -1],
+                              [-1, -1, -1, -1, -1, -1, -1],
+                              [-1, -1, -1, -1, -1, -1, -1]]]])
+    X2 = torch.FloatTensor([[0]])
+    p.logger.info(f"loss, tie, win prob: {F.softmax(p.value(X1, X2), dim=1)[0]}")
+    p.logger.info(f"first move probs: {F.softmax(p.policy(X1, X2), dim=1)[0]}")
 
 def train_and_evaluate():
 
@@ -25,11 +28,12 @@ def train_and_evaluate():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # initialize agent and opponents list
-    p = Agent_TicTacToe_MCTS_NN(simulations=100)
+    p = Agent_Connect4_MCTS_NN(simulations=100, depth=7)
     p.setup_logger(output_dir/'log.txt')
     ops = [p.deepcopy_without_data()]
+    # ops = [Agent_Connect4_Random(0)]
 
-    # initial model evaluation
+    # initial model evaluation & stat
     performances = []
     per = evaluate_agent(p)
     performances.append(per)
