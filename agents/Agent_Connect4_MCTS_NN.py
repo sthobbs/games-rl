@@ -64,7 +64,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
     """
 
     def __init__(self, agent_idx=None, simulations=1000, depth=None, c=1.41,
-                 tau=0.5, n_random=0, verbose=False, value=None, policy=None):
+                 tau=0.5, n_random=0, verbose=False, value=None, policy=None,
+                 **kwargs):
         """
         Initialize agent with value and policy networks.
 
@@ -90,7 +91,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         policy : torch.nn.Module
             Policy network. Used to predict next move for each state.
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
         self.simulations = simulations  # number of simulations for MCTS
         self.depth = depth
         self.c = c  # exploration constant
@@ -232,7 +233,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             Number of epochs to wait before stopping if no improvement.
             If None, do not use early stopping.
         verbose : int
-            Print metrics every verbose epochs.
+            Log metrics every verbose epochs.
         num_epochs : int
             Number of epochs to fit.
         """
@@ -243,7 +244,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         for epoch in range(num_epochs):  # loop over the dataset multiple times
             # fit 1 epoch
             self.fit_epoch(X1_train, X2_train, y_train, model)
-            # print metrics
+            # log metrics
             X1_train = torch.reshape(X1_train, (-1, 1, 6, 7))
             y_pred = model(X1_train, X2_train)
             y_true = y_train
@@ -252,8 +253,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             y_pred = model(X1_test, X2_test)
             y_true = y_test
             test_loss = criterion(y_pred, y_true).item()
-            if epoch % verbose == 0:  # print metrics
-                print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
+            if epoch % verbose == 0:  # log metrics
+                self.logger.info(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
             # check best log loss so far
             if epoch == 0:
                 min_log_loss = test_loss  # min test loss so far
@@ -268,18 +269,18 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             # early stopping
             if epoch > min_log_loss_epoch + early_stopping:
                 break
-        # print optimal epoch
+        # log optimal epoch
         if early_stopping < float("inf"):
-            print("optimal epoch:")
+            self.logger.info("optimal epoch:")
             epoch = min_log_loss_epoch
             train_loss, test_loss = min_log_loss_train, min_log_loss
-            print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
+            self.logger.info(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
             # copy optimal model to agent
             if model.name == 'value':
                 self.value = min_log_loss_model
             elif model.name == 'policy':
                 self.policy = min_log_loss_model
-        print("")
+        self.logger.info("")
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
         """
@@ -310,6 +311,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         yp : torch.Tensor
             Policy network output data.
         """
+        n_datapoints = n * datapoints_per_game * 2  # 2 augmentations
+        self.logger.info(f'generating {n_datapoints} datapoint from {n} games')
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
             # pick random opponent
@@ -436,11 +439,11 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         Xp2_train, Xp2_test = Xp2[:split], Xp2[split:]
         yp_train, yp_test = yp[:split], yp[split:]
         # fit value network
-        print('fitting value network')
+        self.logger.info('fitting value network')
         self.fit_model(Xv1_train, Xv2_train, yv_train, Xv1_test, Xv2_test, yv_test,
                        model=self.value, **kwargs)
         # fit policy network
-        print('fitting policy network')
+        self.logger.info('fitting policy network')
         self.fit_model(Xp1_train, Xp2_train, yp_train, Xp1_test, Xp2_test, yp_test,
                        model=self.policy, **kwargs)
 

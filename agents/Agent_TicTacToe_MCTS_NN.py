@@ -57,7 +57,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
     """
 
     def __init__(self, agent_idx=None, simulations=1000, depth=None, c=1.41,
-                 tau=0.5, n_random=0, verbose=False, value=None, policy=None):
+                 tau=0.5, n_random=0, verbose=False, value=None, policy=None,
+                 **kwargs):
         """
         Initialize agent with value and policy networks.
 
@@ -83,7 +84,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         policy : torch.nn.Module
             Policy network. Used to predict next move for each state.
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
         self.simulations = simulations  # number of simulations for MCTS
         self.depth = depth
         self.c = c  # exploration constant
@@ -209,7 +210,7 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             Number of epochs to wait before stopping if no improvement.
             If None, do not use early stopping.
         verbose : int
-            Print metrics every verbose epochs.
+            Log metrics every verbose epochs.
         num_epochs : int
             Number of epochs to train for.
         """
@@ -227,8 +228,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             y_pred = model(X_test)
             y_true = y_test
             test_loss = criterion(y_pred, y_true).item()
-            if epoch % verbose == 0:  # print metrics
-                print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
+            if epoch % verbose == 0:  # log metrics
+                self.logger.info(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
             # check best log loss so far
             if epoch == 0:
                 min_log_loss = test_loss  # min test loss so far
@@ -243,18 +244,18 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             # early stopping
             if epoch > min_log_loss_epoch + early_stopping:
                 break
-        # print optimal epoch
+        # log optimal epoch
         if early_stopping < float("inf"):
-            print("optimal epoch:")
+            self.logger.info("optimal epoch:")
             epoch = min_log_loss_epoch
             train_loss, test_loss = min_log_loss_train, min_log_loss
-            print(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
+            self.logger.info(f"[{epoch}] train loss = {train_loss}, test loss = {test_loss}")
             # copy optimal model to agent
             if model.name == 'value':
                 self.value = min_log_loss_model
             elif model.name == 'policy':
                 self.policy = min_log_loss_model
-        print("")
+        self.logger.info("")
 
 
     def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
@@ -271,6 +272,8 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         datapoints_per_game : int
             Number of datapoints to generate per game.
         """
+        n_datapoints = n * datapoints_per_game * 8  # 8 augmentations
+        self.logger.info(f'generating {n_datapoints} datapoint from {n} games')
         Xv, yv, Xp, yp = [], [], [], []
         for _ in tqdm(range(n)):
             # pick random opponent
@@ -441,10 +444,10 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
         Xp_train, Xp_test = Xp[:split], Xp[split:]
         yp_train, yp_test = yp[:split], yp[split:]
         # fit value network
-        print('fitting value network')
+        self.logger.info('fitting value network')
         self.fit_model(Xv_train, yv_train, Xv_test, yv_test, model=self.value, **kwargs)
         # fit policy network
-        print('fitting policy network')
+        self.logger.info('fitting policy network')
         self.fit_model(Xp_train, yp_train, Xp_test, yp_test, model=self.policy, **kwargs)
 
     def play_turn(self, state):

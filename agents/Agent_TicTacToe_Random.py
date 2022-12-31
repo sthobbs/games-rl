@@ -5,7 +5,7 @@ from agents.Agent_TicTacToe import Agent_TicTacToe
 class Agent_TicTacToe_Random(Agent_TicTacToe):
     """Agent that plays tic-tac-toe randomly."""
 
-    def __init__(self, agent_idx=None):
+    def __init__(self, agent_idx=None, **kwargs):
         """
         Initialize the Agent with an agent index.
 
@@ -14,7 +14,7 @@ class Agent_TicTacToe_Random(Agent_TicTacToe):
         agent_idx : int
             the agent index (which often specifies how to mark the game state).
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
 
     def play_turn(self, state):
         """

@@ -6,7 +6,7 @@ from mcts.MCTS_Connect4_methods import MCTS_Connect4_methods
 class Agent_Connect4_MCTS(Agent_Connect4):
     """Agents plays tic-tac-toe moves based on Monte Carlo Tree Search."""
 
-    def __init__(self, agent_idx=None, simulations=1000, verbose=False):
+    def __init__(self, agent_idx=None, simulations=1000, verbose=False, **kwargs):
         """
         Initialize the Agent.
 
@@ -19,7 +19,7 @@ class Agent_Connect4_MCTS(Agent_Connect4):
         verbose : bool
             whether to print debugging information.
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
         self.simulations = simulations  # number of simulations for MCTS
         self.verbose = verbose  # set to True for debugging
 

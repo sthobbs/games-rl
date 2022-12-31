@@ -4,7 +4,7 @@ from agents.Agent_TicTacToe import Agent_TicTacToe
 class Agent_TicTacToe_User(Agent_TicTacToe):
     """An agent that allows a human to manually play tic tac toe."""
 
-    def __init__(self, agent_idx=None):
+    def __init__(self, agent_idx=None, **kwargs):
         """
         Initialize the Agent with an agent index.
 
@@ -13,7 +13,7 @@ class Agent_TicTacToe_User(Agent_TicTacToe):
         agent_idx : int
             the agent index (which often specifies to they mark the game state).
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
 
     def play_turn(self, state):
         """

@@ -6,7 +6,7 @@ from games.Connect4 import Connect4
 class Agent_Connect4(Agent):
     """Agents that plays Connect 4."""
 
-    def __init__(self, agent_idx=None):
+    def __init__(self, agent_idx=None, **kwargs):
         """
         Initialize the Agent with an agent index.
 
@@ -15,7 +15,7 @@ class Agent_Connect4(Agent):
         agent_idx : int
             the agent index (which often specifies how to mark the game state).
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
         self.game = Connect4
 
     def valid_moves(self, state):

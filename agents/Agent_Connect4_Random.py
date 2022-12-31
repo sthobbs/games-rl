@@ -5,7 +5,7 @@ from agents.Agent_Connect4 import Agent_Connect4
 class Agent_Connect4_Random(Agent_Connect4):
     """Agent that plays Connect 4 randomly."""
 
-    def __init__(self, agent_idx=None):
+    def __init__(self, agent_idx=None, **kwargs):
         """
         Initialize the Agent with an agent index.
 
@@ -14,7 +14,7 @@ class Agent_Connect4_Random(Agent_Connect4):
         agent_idx : int
             the agent index (which often specifies how to mark the game state).
         """
-        super().__init__(agent_idx)
+        super().__init__(agent_idx, **kwargs)
 
     def play_turn(self, state):
         """

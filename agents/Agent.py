@@ -3,12 +3,12 @@ import pickle
 import torch
 from tqdm import tqdm
 from games.TicTacToe import TicTacToe
-
+import logging
 
 class Agent():
     """Abstract class for Agents to play games."""
 
-    def __init__(self, agent_idx):
+    def __init__(self, agent_idx, logger=None, log_file=None):
         """
         Initialize the Agent with an agent index.
 
@@ -16,9 +16,48 @@ class Agent():
         ----------
         agent_idx : int
             the agent index (which often specifies how to mark the game state).
+        logger : logging.Logger, optional
+            the logger to use. If None, a new logger is created.
+        log_file : str, optional
+            the file to log to. If None, no file logging is performed.
         """
         self.agent_idx = agent_idx
         self.game = TicTacToe
+        # set up logging
+        if logger is None:
+            self.setup_logger(log_file)
+        else:
+            self.logger = logger
+
+    def setup_logger(self, log_file=None):
+        """
+        Set up logging for the Agent.
+
+        Parameters
+        ----------
+        log_file : str, optional
+            the file to log to. If None, no file logging is performed.
+        """
+
+        # create logger
+        self.logger = logging.getLogger(__name__).getChild(self.__class__.__name__).getChild(str(id(self)))
+        self.logger.setLevel(logging.DEBUG)
+
+        # create formatter
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+        # create and add handlers for console output
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        ch.setFormatter(formatter)
+        self.logger.addHandler(ch)
+
+        # create and add handlers for file output
+        if log_file is not None:
+            fh = logging.FileHandler(log_file)
+            fh.setLevel(logging.DEBUG)
+            fh.setFormatter(formatter)
+            self.logger.addHandler(fh)
 
     @abc.abstractmethod
     def play_turn(self, state):
@@ -62,6 +101,8 @@ class Agent():
         """
         with open(path, 'wb') as f:
             pickle.dump(self, f)
+        self.logger.info(f"copied agent to {path}")
+
 
     def from_pickle(self, path):
         """
@@ -74,6 +115,8 @@ class Agent():
         """
         with open(path) as f:
             self.__dict__ = pickle.load(f).__dict__
+        self.logger.info(f"loaded agent from {path}")
+        
 
     # TODO?: parallelize this
     # TODO?: might move this out of the agent class
@@ -92,11 +135,11 @@ class Agent():
             index of agent which we are generating data for.
             if None, data is picked randomly from all players
         return_results : bool
-            if True, return the results of the games
+            if True, return loss, tie, and win counts
         datapoints_per_game : int
             number of datapoints to generate per game
         verbose : bool
-            if True, show a progress bar
+            if True, log win, tie, and loss counts
         one_hot : bool
             if True, encode the game result as a one-hot vector
 
@@ -150,12 +193,18 @@ class Agent():
                 Yv.append(yv)
             # update tie-win-loss count for agents[0]
             twl[winner+1] += 1
-        if return_results:
-            return twl
+        # set number of ties, wins, and losses
+        t = twl[0]
+        if self.agent_idx == 0:
+            l, w = twl[2], twl[1]
+        else:
+            l, w = twl[1], twl[2]
+        # log results
         if verbose:
-            if self.agent_idx == 0:
-                results = f"wins = {twl[1]}, ties = {twl[0]}, losses = {twl[2]}"
-            else:
-                results = f"wins = {twl[2]}, ties = {twl[0]}, losses = {twl[1]}"
-            print(results)
+            results = f"wins = {w}, ties = {t}, losses = {l}"
+            self.logger.info(results)
+        # return results
+        if return_results:
+            return [l, t, w]
+        # return data
         return Xv, Yv, Xp, Yp
