@@ -1,9 +1,10 @@
-import abc
-import pickle
 from tqdm import tqdm
 from games.TicTacToe import TicTacToe
-import logging
 from multiprocessing import Pool
+import abc
+import pickle
+import logging
+import random
 
 
 class Agent():
@@ -212,15 +213,22 @@ class Agent():
 
         # parallelize games
         if n_jobs > 1:
-            # set up args for parallel games
-            args = (agents, player, datapoints_per_game, one_hot)
-            arg_list = [args] * n
             
             # if agent stores data, then make a copy without data before passing to pool
             if hasattr(self, "deepcopy_without_data"):
                 agent_copy = self.deepcopy_without_data()
             else:
                 agent_copy = self
+            agents_copy = []
+            for agent in agents:
+                if hasattr(agent, "deepcopy_without_data"):
+                    agents_copy.append(agent.deepcopy_without_data())
+                else:
+                    agents_copy.append(agent)
+
+            # set up args for parallel games
+            args = (agents_copy, player, datapoints_per_game, one_hot)
+            arg_list = [args] * n
             
             # run games in parallel
             with Pool(n_jobs) as pool:
@@ -259,3 +267,43 @@ class Agent():
             return [l, t, w]
         # return data
         return Xv, Yv, Xp, Yp
+
+    def gen_data_kwargs(self, kwargs):
+        """
+        Wrapper for gen_data() which allows for passing kwargs as a dict.
+        """
+        return self.gen_data(**kwargs)
+
+
+    def kwargs_generator_for_gen_data(self, n, ops, datapoints_per_game):
+        """
+        generate kwargs for gen_data_kwargs for n games against different
+        opponents, randomly selected from ops.
+        
+        Parameters
+        ----------
+        n : int
+            Number of games to play.
+        ops : list
+            List of opponent agents.
+        datapoints_per_game : int
+            Number of datapoints to generate per game.
+        """
+        for _ in range(n):
+            # pick random opponent
+            op = random.choice(ops)
+            # randomly pick who goes first
+            if random.random() < 0.5:
+                agents = [self, op]
+                player = 0
+            else:
+                agents = [op, self]
+                player = 1
+            # yield kwargs for gen_data_kwargs
+            yield {
+                'n': 1,
+                'agents': agents,
+                'player': player,
+                'datapoints_per_game': datapoints_per_game,
+                'verbose': False,
+            }

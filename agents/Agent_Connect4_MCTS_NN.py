@@ -5,6 +5,7 @@ from games.Connect4 import Connect4
 from games.Game import Game
 from copy import deepcopy
 from tqdm import tqdm
+from multiprocessing import Pool
 import random
 import torch
 import torch.nn as nn
@@ -282,7 +283,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
                 self.policy = min_log_loss_model
         self.logger.info("")
 
-    def gen_data_diff_ops(self, n, ops, datapoints_per_game=1):
+    def gen_data_diff_ops(self, n, ops, datapoints_per_game=1, n_jobs=1):
         """
         play n games against different opponents, randomly selected from ops,
         and generate data from these games.
@@ -295,6 +296,8 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             List of opponent agents.
         datapoints_per_game : int
             Number of datapoints to generate per game.
+        n_jobs : int
+            Number of games to play in parallel.
 
         Returns
         -------
@@ -314,23 +317,42 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
         n_datapoints = n * datapoints_per_game * 2  # 2 augmentations
         self.logger.info(f'generating {n_datapoints} datapoint from {n} games')
         Xv, yv, Xp, yp = [], [], [], []
-        for _ in tqdm(range(n)):
-            # pick random opponent
-            op = random.choice(ops)
-            # randomly pick who goes first
-            if random.random() < 0.5:
-                agents = [self, op]
-                player = 0
-            else:
-                agents = [op, self]
-                player = 1
-            Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player,
-                                               datapoints_per_game=datapoints_per_game,
-                                               verbose=False)
-            Xv.extend(Xv_)
-            yv.extend(yv_)
-            Xp.extend(Xp_)
-            yp.extend(yp_)
+
+        # parallelize games
+        if n_jobs > 1:
+            # copy agent without data before passing to pool
+            agent_copy = self.deepcopy_without_data()
+            # set up kwargs generator for parallel games
+            kwargs_gen = agent_copy.kwargs_generator_for_gen_data(n, ops, datapoints_per_game)
+            # play games in parallel
+            with Pool(n_jobs) as pool:
+                game_data = tqdm(pool.imap(agent_copy.gen_data_kwargs, kwargs_gen), total=n)
+                # collect data
+                for Xv_, yv_, Xp_, yp_ in game_data:
+                    Xv.extend(Xv_)
+                    yv.extend(yv_)
+                    Xp.extend(Xp_)
+                    yp.extend(yp_)
+        
+        # play games sequentially
+        else:
+            for _ in tqdm(range(n)):
+                # pick random opponent
+                op = random.choice(ops)
+                # randomly pick who goes first
+                if random.random() < 0.5:
+                    agents = [self, op]
+                    player = 0
+                else:
+                    agents = [op, self]
+                    player = 1
+                Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player,
+                                                datapoints_per_game=datapoints_per_game,
+                                                verbose=False)
+                Xv.extend(Xv_)
+                yv.extend(yv_)
+                Xp.extend(Xp_)
+                yp.extend(yp_)
         # reformat data (since we need multiple input tensors)
         Xv1 = [state for state, _ in Xv]
         Xv2 = [turn for _, turn in Xv]

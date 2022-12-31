@@ -8,7 +8,9 @@ import pickle
 random.seed(20)
 
 output_dir = Path('training_output/Connect4')
-n_jobs = 5
+n_jobs = 5  # number of processes to use for parallelization
+train_games = 1000  # number of games to play in each iteration
+eval_games = 100  # number of games to play in each evaluation
 
 def log_stats(p):
     X1 = torch.FloatTensor([[[[-1, -1, -1, -1, -1, -1, -1],
@@ -34,7 +36,7 @@ def train_and_evaluate():
 
     # initial model evaluation & stat
     performances = []
-    per = evaluate_agent(p, n_jobs=n_jobs)
+    per = evaluate_agent(p, n=eval_games, n_jobs=n_jobs)
     performances.append(per)
     log_stats(p)
 
@@ -44,7 +46,7 @@ def train_and_evaluate():
         p.logger.info(f"Iteration {i+1} of {iterations}")
         
         # play vs opponent agents and generate data
-        p.gen_data_diff_ops(n=1000, ops=ops, datapoints_per_game=3)
+        p.gen_data_diff_ops(n=train_games, ops=ops, datapoints_per_game=3, n_jobs=n_jobs)
         
         # train value and policy networks
         p.fit(test_size=0.1, refit_datapoints=200000, early_stopping=50,
@@ -54,7 +56,7 @@ def train_and_evaluate():
         ops.append(p.deepcopy_without_data())
         
         # evaluate against random move agent and mcts agent
-        per = evaluate_agent(p, n_jobs=n_jobs)
+        per = evaluate_agent(p, n=eval_games, n_jobs=n_jobs)
         performances.append(per)
         log_stats(p)
 
@@ -62,7 +64,7 @@ def train_and_evaluate():
     p.logger.info('Evaluate agent with tau=inf')
     tau = p.tau
     p.tau = None
-    evaluate_agent(p, n_jobs=n_jobs)
+    evaluate_agent(p, n=eval_games, n_jobs=n_jobs)
     p.tau = tau
 
     # plot performance
