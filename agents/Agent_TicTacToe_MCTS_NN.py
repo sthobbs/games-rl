@@ -173,7 +173,6 @@ class Agent_TicTacToe_MCTS_NN(Agent_TicTacToe):
             loss.backward()
             optimizer.step()
 
-    # TODO: move to agent or utils (need to generalize to list of tensors)
     def random_permute(self, X, y):
         """
         Randomly permute data.

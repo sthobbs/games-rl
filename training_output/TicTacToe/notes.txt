@@ -1,0 +1,1 @@
+Trained on c2d-highcpu-8 (8 vCPUs, 16 GB RAM) machine on GCP
