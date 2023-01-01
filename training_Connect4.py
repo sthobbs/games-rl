@@ -5,12 +5,19 @@ import torch
 import torch.nn.functional as F
 import random
 import pickle
-random.seed(20)
+import numpy as np
+
+# set seed
+seed = 20
+random.seed(seed)
+np.random.seed(seed)
 
 output_dir = Path('training_output/Connect4')
-n_jobs = 5  # number of processes to use for parallelization
+n_jobs = 8  # number of processes to use for parallelization (# vCPU / 4 seems to be a good number)
 train_games = 1000  # number of games to play in each iteration
 eval_games = 100  # number of games to play in each evaluation
+iterations = 15
+
 
 def log_stats(p):
     X1 = torch.FloatTensor([[[[-1, -1, -1, -1, -1, -1, -1],
@@ -41,12 +48,11 @@ def train_and_evaluate():
     log_stats(p)
 
     # train agent
-    iterations = 15
     for i in range(iterations):
         p.logger.info(f"Iteration {i+1} of {iterations}")
         
         # play vs opponent agents and generate data
-        p.gen_data_diff_ops(n=train_games, ops=ops, datapoints_per_game=3, n_jobs=n_jobs)
+        p.gen_data_diff_ops(n=train_games, ops=ops, datapoints_per_game=12, n_jobs=n_jobs)
         
         # train value and policy networks
         p.fit(test_size=0.1, refit_datapoints=200000, early_stopping=50,

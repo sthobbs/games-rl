@@ -5,12 +5,19 @@ import torch
 import torch.nn.functional as F
 import random
 import pickle
-random.seed(20)
+import numpy as np
 
-output_dir = Path('training_output/TicTacToe')
-n_jobs = 5  # number of processes to use for parallelization
+# set seed
+seed = 20
+random.seed(seed)
+np.random.seed(seed)
+
+output_dir = Path('training_output/TicTacToe_test1')
+n_jobs = 8  # number of processes to use for parallelization
 train_games = 1000  # number of games to play in each iteration
 eval_games = 100  # number of games to play in each evaluation
+iterations = 15
+
 
 def log_stats(p):
     X = torch.FloatTensor([[-1, -1, -1, -1, -1, -1, -1, -1, -1, 0]])  # empty board
@@ -38,7 +45,6 @@ def train_and_evaluate():
     log_stats(p)
 
     # train agent
-    iterations = 15
     for i in range(iterations):
         p.logger.info(f"Iteration {i+1} of {iterations}")
         
