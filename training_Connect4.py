@@ -1,3 +1,5 @@
+# This script trains an agent to play Connect4 using MCTS guided by neural networks.
+
 from pathlib import Path
 from agents.Agent_Connect4_MCTS_NN import Agent_Connect4_MCTS_NN
 from utils import plot_performance, evaluate_agent
@@ -7,16 +9,25 @@ import random
 import pickle
 import numpy as np
 
+# if you get "IOError: [Errno 24] Too many open files:", then run "ulimit -n 50000"
+# in terminal to increase the limit for number of open files.
+
+# Since we're repeating single inference, overhead from more threads slows down the
+# process a lot. This is very important for models with Conv2d layers on machines with
+# many cores.
+torch.set_num_threads(1)
+
 # set seed
 seed = 20
 random.seed(seed)
 np.random.seed(seed)
 
 output_dir = Path('training_output/Connect4')
-n_jobs = 8  # number of processes to use for parallelization (# vCPU / 4 seems to be a good number)
-train_games = 1000  # number of games to play in each iteration
+n_jobs = 112  # number of processes to use for parallelization (set to number of vCPUs)
+train_games = 5000  # number of games to play in each iteration
 eval_games = 100  # number of games to play in each evaluation
-iterations = 15
+iterations = 15  # number of iterations to train for
+refit_datapoints = 1000000  # number of datapoints to use for refitting the model
 
 
 def log_stats(p):
@@ -39,7 +50,6 @@ def train_and_evaluate():
     p = Agent_Connect4_MCTS_NN(simulations=100, depth=7)
     p.setup_logger(output_dir/'log.txt')
     ops = [p.deepcopy_without_data()]
-    # ops = [Agent_Connect4_Random(0)]
 
     # initial model evaluation & stat
     performances = []
@@ -55,8 +65,8 @@ def train_and_evaluate():
         p.gen_data_diff_ops(n=train_games, ops=ops, datapoints_per_game=12, n_jobs=n_jobs)
         
         # train value and policy networks
-        p.fit(test_size=0.1, refit_datapoints=200000, early_stopping=50,
-            num_epochs=300, verbose=10)
+        p.fit(test_size=0.1, refit_datapoints=refit_datapoints, early_stopping=50,
+              num_epochs=300, verbose=10)
         
         # append to opponents list
         ops.append(p.deepcopy_without_data())
@@ -74,7 +84,7 @@ def train_and_evaluate():
     p.tau = tau
 
     # plot performance
-    plot_performance(performances, output_dir)
+    plot_performance(performances, output_dir, games_per_iteration=train_games)
 
     # save agents
     p.to_pickle(f"{output_dir}/agent.pkl")

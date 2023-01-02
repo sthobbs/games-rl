@@ -1,3 +1,5 @@
+# This script trains an agent to play Tic Tac Toe using MCTS guided by neural networks.
+
 from pathlib import Path
 from agents.Agent_TicTacToe_MCTS_NN import Agent_TicTacToe_MCTS_NN
 from utils import plot_performance, evaluate_agent
@@ -12,11 +14,12 @@ seed = 20
 random.seed(seed)
 np.random.seed(seed)
 
-output_dir = Path('training_output/TicTacToe_test1')
+output_dir = Path('training_output/TicTacToe')
 n_jobs = 8  # number of processes to use for parallelization
 train_games = 1000  # number of games to play in each iteration
 eval_games = 100  # number of games to play in each evaluation
-iterations = 15
+iterations = 15  # number of iterations to train for
+refit_datapoints = 200000  # number of datapoints to use for refitting the model
 
 
 def log_stats(p):
@@ -52,8 +55,8 @@ def train_and_evaluate():
         p.gen_data_diff_ops(n=train_games, ops=ops, datapoints_per_game=3, n_jobs=n_jobs)
         
         # train value and policy networks
-        p.fit(test_size=0.1, refit_datapoints=200000, early_stopping=50,
-            num_epochs=300, verbose=10)
+        p.fit(test_size=0.1, refit_datapoints=refit_datapoints, early_stopping=50,
+              num_epochs=300, verbose=10)
         
         # append to opponents list
         ops.append(p.deepcopy_without_data())
@@ -71,7 +74,7 @@ def train_and_evaluate():
     p.tau = tau
 
     # plot performance
-    plot_performance(performances, output_dir)
+    plot_performance(performances, output_dir, games_per_iteration=train_games)
 
     # save agents
     p.to_pickle(f"{output_dir}/agent.pkl")
