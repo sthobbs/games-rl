@@ -109,7 +109,7 @@ class Agent():
         path : str
             the path to load the pickle file from
         """
-        with open(path) as f:
+        with open(path, 'rb') as f:
             self.__dict__ = pickle.load(f).__dict__
         self.logger.info(f"loaded agent from {path}")
 
