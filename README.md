@@ -9,10 +9,3 @@ From a given game state, a policy network predicts the next move, and a value ne
 To evaluate the agent's progress during training, it plays against other agents who (1) pick moves completely randomly, and (2) use traditional Monte Carlo Tree Search.
 
 ![image](/training_output/TicTacToe/loss_rates.png?raw=true "Tic Tac Toe Agent Loss Rates")
-
-
-
-
-
-
-
