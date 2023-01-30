@@ -38,23 +38,6 @@ class Value(nn.Module):
         x = self.fc2(x)
         return x
 
-    # def __init__(self):
-    #     super().__init__()
-    #     self.flatten = nn.Flatten()
-    #     self.fc1 = nn.Linear(43, 350)
-    #     self.fc2 = nn.Linear(350, 50)
-    #     self.fc3 = nn.Linear(50, 25)
-    #     self.fc4 = nn.Linear(25, 3)
-
-    # def forward(self, state, turn):
-    #     x = self.flatten(state)
-    #     x = torch.cat((x, turn), dim=1)
-    #     x = F.relu(self.fc1(x))
-    #     x = F.relu(self.fc2(x))
-    #     x = F.relu(self.fc3(x))
-    #     x = self.fc4(x)
-    #     return x
-
 
 class Policy(nn.Module):
     """Policy network for agent, predicts next move"""
@@ -77,8 +60,6 @@ class Policy(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
-
-
 
 
 class Agent_Connect4_MCTS_NN(Agent_Connect4):
