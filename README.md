@@ -1,6 +1,4 @@
-# Games Reinforcement Learning
-
-AlphaGo-inspired reinforcement learning.
+# AlphaGo-Inspired Reinforcement Learning
 
 DeepMind's [AlphaGo](https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf) beating world champion Lee Sedol in the game of Go in 2016 was my initial inspiration to study machine learning. Applying many their ideas here, we use reinforcement learning to trains agents to play Tic Tac Toe and Connect 4 with a modified Monte-Carlo Tree Search (MCTS) algorithm that's guided by neural networks.
 
