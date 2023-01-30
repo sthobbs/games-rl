@@ -21,20 +21,39 @@ class Value(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 120, 4)  # 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
-        self.conv2 = nn.Conv2d(120, 5, 2)  # 3x4x120 -> 2x3x5 ((2x2x120+1) x 5 parameters)
+        self.conv1 = nn.Conv2d(1, 128, 4)  # 6x7 -> 3x4x128 ((4x4+1) x 128 parameters)
+        self.conv2 = nn.Conv2d(128, 64, 2)  # 3x4x120 -> 2x3x64 ((2x2x128+1) x 64 parameters)
+        self.conv3 = nn.Conv2d(64, 32, 2)  # 2x3x64 -> 1x2x32 ((2x2x64+1) x 28 parameters)
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(31, 20)
-        self.fc2 = nn.Linear(20, 3)  # output loss, tie, win probabilities
+        self.fc1 = nn.Linear(65, 64)
+        self.fc2 = nn.Linear(64, 3)  # output loss, tie, win probabilities
 
     def forward(self, state, turn):
         x = F.relu(self.conv1(state))
         x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
         x = self.flatten(x)
         x = torch.cat((x, turn), dim=1)  # concatenate conv output and turn
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+    # def __init__(self):
+    #     super().__init__()
+    #     self.flatten = nn.Flatten()
+    #     self.fc1 = nn.Linear(43, 350)
+    #     self.fc2 = nn.Linear(350, 50)
+    #     self.fc3 = nn.Linear(50, 25)
+    #     self.fc4 = nn.Linear(25, 3)
+
+    # def forward(self, state, turn):
+    #     x = self.flatten(state)
+    #     x = torch.cat((x, turn), dim=1)
+    #     x = F.relu(self.fc1(x))
+    #     x = F.relu(self.fc2(x))
+    #     x = F.relu(self.fc3(x))
+    #     x = self.fc4(x)
+    #     return x
 
 
 class Policy(nn.Module):
@@ -42,20 +61,24 @@ class Policy(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 120, 4)  # 6x7 -> 3x4x120 ((4x4+1) x 120 parameters)
-        self.conv2 = nn.Conv2d(120, 5, 2)  # 3x4x120 -> 2x3x5 ((2x2x120+1) x 5 parameters)
+        self.conv1 = nn.Conv2d(1, 128, 4)  # 6x7 -> 3x4x128 ((4x4+1) x 128 parameters)
+        self.conv2 = nn.Conv2d(128, 64, 2)  # 3x4x120 -> 2x3x64 ((2x2x128+1) x 64 parameters)
+        self.conv3 = nn.Conv2d(64, 32, 2)  # 2x3x64 -> 1x2x32 ((2x2x64+1) x 28 parameters)
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(31, 20)
-        self.fc2 = nn.Linear(20, 7)  # output (column) move predictions
+        self.fc1 = nn.Linear(65, 64)
+        self.fc2 = nn.Linear(64, 7)  # output loss, tie, win probabilities
 
     def forward(self, state, turn):
         x = F.relu(self.conv1(state))
         x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
         x = self.flatten(x)
         x = torch.cat((x, turn), dim=1)  # concatenate conv output and turn
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+
 
 
 class Agent_Connect4_MCTS_NN(Agent_Connect4):
@@ -283,7 +306,7 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
                 self.policy = min_log_loss_model
         self.logger.info("")
 
-    def gen_data_diff_ops(self, n, ops, datapoints_per_game=1, n_jobs=1):
+    def gen_data_diff_ops(self, n, ops, datapoints_per_game=1, n_jobs=1, best=None):
         """
         play n games against different opponents, randomly selected from ops,
         and generate data from these games.
@@ -298,30 +321,22 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
             Number of datapoints to generate per game.
         n_jobs : int
             Number of games to play in parallel.
-
-        Returns
-        -------
-        Xv1 : torch.Tensor
-            Game state value network input data.
-        Xv2 : torch.Tensor
-            Agent turn value network input data.
-        yv : torch.Tensor
-            Value network output data.
-        Xp1 : torch.Tensor
-            Game state policy network input data.
-        Xp2 : torch.Tensor
-            Agent turn policy network input data.
-        yp : torch.Tensor
-            Policy network output data.
+        best : Agent
+            Agent to use for generating data. If None, use self.
         """
         n_datapoints = n * datapoints_per_game * 2  # 2 augmentations
         self.logger.info(f'generating {n_datapoints} datapoint from {n} games')
         Xv, yv, Xp, yp = [], [], [], []
 
+        # set agent to use for generating data
+        agent = self
+        if best is not None:
+            agent = best
+
         # parallelize games
         if n_jobs > 1:
             # copy agent without data before passing to pool
-            agent_copy = self.deepcopy_without_data()
+            agent_copy = agent.deepcopy_without_data()
             # set up kwargs generator for parallel games
             kwargs_gen = agent_copy.kwargs_generator_for_gen_data(n, ops, datapoints_per_game)
             # play games in parallel
@@ -341,12 +356,12 @@ class Agent_Connect4_MCTS_NN(Agent_Connect4):
                 op = random.choice(ops)
                 # randomly pick who goes first
                 if random.random() < 0.5:
-                    agents = [self, op]
+                    agents = [agent, op]
                     player = 0
                 else:
-                    agents = [op, self]
+                    agents = [op, agent]
                     player = 1
-                Xv_, yv_, Xp_, yp_ = self.gen_data(1, agents=agents, player=player,
+                Xv_, yv_, Xp_, yp_ = agent.gen_data(1, agents=agents, player=player,
                                                 datapoints_per_game=datapoints_per_game,
                                                 verbose=False)
                 Xv.extend(Xv_)
@@ -535,7 +550,6 @@ class Connect4_MCTS_NN_Node(MCTS_Connect4_methods, MCTS_NN_Node):
     def value_predict(self):
         """Return output of the value network for the current state."""
         x1, x2 = self.prep_data(self.state, self.turn)
-        # breakpoint()
         return F.softmax(self.agent.value(x1, x2), dim=1)[0]
 
     def policy_predict(self):
