@@ -73,10 +73,10 @@ def train_and_evaluate():
     # train agent
     for i in range(iterations):
         p.logger.info(f"Iteration {i+1} of {iterations}")
-        
+
         # play vs opponent agents and generate data
         p.gen_data_diff_ops(n=train_games, ops=ops, datapoints_per_game=12, n_jobs=n_jobs)
-        
+
         # train value and policy networks
         p.fit(test_size=0.1, refit_datapoints=refit_datapoints, early_stopping=early_stopping,
               num_epochs=300, verbose=10)

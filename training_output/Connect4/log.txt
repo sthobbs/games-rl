@@ -1,0 +1,364 @@
+2023-01-05 00:29:05,127 - INFO - Evaluating Agent:
+2023-01-05 00:29:05,127 - INFO - going 1st vs random
+2023-01-05 00:29:38,368 - INFO - wins = 48, ties = 0, losses = 52
+2023-01-05 00:29:38,370 - INFO - going 2nd vs random
+2023-01-05 00:30:10,722 - INFO - wins = 32, ties = 0, losses = 68
+2023-01-05 00:30:10,724 - INFO - going 1st vs mcts
+2023-01-05 00:30:42,270 - INFO - wins = 1, ties = 0, losses = 99
+2023-01-05 00:30:42,272 - INFO - going 2nd vs mcts
+2023-01-05 00:31:11,104 - INFO - wins = 0, ties = 0, losses = 100
+2023-01-05 00:31:11,108 - INFO - loss, tie, win prob: tensor([0.3193, 0.3395, 0.3411], grad_fn=<SelectBackward0>)
+2023-01-05 00:31:11,109 - INFO - first move probs: tensor([0.1366, 0.1559, 0.1291, 0.1491, 0.1473, 0.1369, 0.1450],
+       grad_fn=<SelectBackward0>)
+2023-01-05 00:31:11,109 - INFO - Iteration 1 of 12
+2023-01-05 00:31:11,109 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 00:49:51,697 - INFO - fitting value network
+2023-01-05 00:49:55,050 - INFO - [0] train loss = 0.7029793858528137, test loss = 0.7009531259536743
+2023-01-05 00:50:28,371 - INFO - [10] train loss = 0.6997179388999939, test loss = 0.6979950070381165
+2023-01-05 00:51:01,686 - INFO - [20] train loss = 0.6962335705757141, test loss = 0.6951921582221985
+2023-01-05 00:51:34,942 - INFO - [30] train loss = 0.6931061148643494, test loss = 0.6934144496917725
+2023-01-05 00:52:08,192 - INFO - [40] train loss = 0.6874392628669739, test loss = 0.6908684372901917
+2023-01-05 00:52:41,424 - INFO - [50] train loss = 0.6774154305458069, test loss = 0.6873214244842529
+2023-01-05 00:53:14,736 - INFO - [60] train loss = 0.6629570722579956, test loss = 0.6884921193122864
+2023-01-05 00:53:48,023 - INFO - [70] train loss = 0.6310364007949829, test loss = 0.6845652461051941
+2023-01-05 00:54:21,237 - INFO - [80] train loss = 0.5972074270248413, test loss = 0.6935055255889893
+2023-01-05 00:54:24,565 - INFO - optimal epoch:
+2023-01-05 00:54:24,565 - INFO - [70] train loss = 0.6310364007949829, test loss = 0.6845652461051941
+2023-01-05 00:54:24,565 - INFO - 
+2023-01-05 00:54:24,567 - INFO - fitting policy network
+2023-01-05 00:54:27,293 - INFO - [0] train loss = 1.9094547033309937, test loss = 1.9112287759780884
+2023-01-05 00:54:54,262 - INFO - [10] train loss = 1.9068539142608643, test loss = 1.909997820854187
+2023-01-05 00:55:21,252 - INFO - [20] train loss = 1.9034641981124878, test loss = 1.9085716009140015
+2023-01-05 00:55:48,252 - INFO - [30] train loss = 1.8994715213775635, test loss = 1.9078333377838135
+2023-01-05 00:56:15,246 - INFO - [40] train loss = 1.891487956047058, test loss = 1.9039185047149658
+2023-01-05 00:56:42,309 - INFO - [50] train loss = 1.8830304145812988, test loss = 1.902017593383789
+2023-01-05 00:57:09,343 - INFO - [60] train loss = 1.8711276054382324, test loss = 1.90048348903656
+2023-01-05 00:57:36,362 - INFO - [70] train loss = 1.8601317405700684, test loss = 1.9043701887130737
+2023-01-05 00:57:47,177 - INFO - optimal epoch:
+2023-01-05 00:57:47,178 - INFO - [63] train loss = 1.866020917892456, test loss = 1.8992819786071777
+2023-01-05 00:57:47,178 - INFO - 
+2023-01-05 00:57:47,182 - INFO - Evaluating Agent:
+2023-01-05 00:57:47,182 - INFO - going 1st vs random
+2023-01-05 00:58:14,304 - INFO - wins = 88, ties = 0, losses = 12
+2023-01-05 00:58:14,306 - INFO - going 2nd vs random
+2023-01-05 00:58:44,849 - INFO - wins = 66, ties = 0, losses = 34
+2023-01-05 00:58:44,852 - INFO - going 1st vs mcts
+2023-01-05 00:59:19,003 - INFO - wins = 17, ties = 0, losses = 83
+2023-01-05 00:59:19,005 - INFO - going 2nd vs mcts
+2023-01-05 00:59:49,952 - INFO - wins = 3, ties = 0, losses = 97
+2023-01-05 00:59:49,956 - INFO - loss, tie, win prob: tensor([0.4057, 0.0032, 0.5912], grad_fn=<SelectBackward0>)
+2023-01-05 00:59:49,956 - INFO - first move probs: tensor([0.0816, 0.1771, 0.1570, 0.1744, 0.1590, 0.1712, 0.0797],
+       grad_fn=<SelectBackward0>)
+2023-01-05 00:59:50,319 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 00:59:50,325 - INFO - Iteration 2 of 12
+2023-01-05 00:59:50,326 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 01:25:34,203 - INFO - fitting value network
+2023-01-05 01:25:39,768 - INFO - [0] train loss = 0.6643016338348389, test loss = 0.6693390011787415
+2023-01-05 01:26:35,459 - INFO - [10] train loss = 0.6227861046791077, test loss = 0.6563448309898376
+2023-01-05 01:27:31,101 - INFO - [20] train loss = 0.5772837996482849, test loss = 0.6540033221244812
+2023-01-05 01:27:53,326 - INFO - optimal epoch:
+2023-01-05 01:27:53,327 - INFO - [13] train loss = 0.6029790639877319, test loss = 0.6497361063957214
+2023-01-05 01:27:53,327 - INFO - 
+2023-01-05 01:27:53,329 - INFO - fitting policy network
+2023-01-05 01:27:58,869 - INFO - [0] train loss = 1.7818341255187988, test loss = 1.7844513654708862
+2023-01-05 01:28:54,289 - INFO - [10] train loss = 1.7374396324157715, test loss = 1.7612993717193604
+2023-01-05 01:29:49,714 - INFO - [20] train loss = 1.7062288522720337, test loss = 1.7576383352279663
+2023-01-05 01:30:34,028 - INFO - optimal epoch:
+2023-01-05 01:30:34,028 - INFO - [17] train loss = 1.7145984172821045, test loss = 1.757622480392456
+2023-01-05 01:30:34,028 - INFO - 
+2023-01-05 01:30:34,034 - INFO - Evaluating Agent:
+2023-01-05 01:30:34,034 - INFO - going 1st vs random
+2023-01-05 01:31:02,896 - INFO - wins = 89, ties = 0, losses = 11
+2023-01-05 01:31:02,899 - INFO - going 2nd vs random
+2023-01-05 01:31:34,063 - INFO - wins = 78, ties = 1, losses = 21
+2023-01-05 01:31:34,066 - INFO - going 1st vs mcts
+2023-01-05 01:32:05,322 - INFO - wins = 26, ties = 0, losses = 74
+2023-01-05 01:32:05,325 - INFO - going 2nd vs mcts
+2023-01-05 01:32:37,394 - INFO - wins = 3, ties = 0, losses = 97
+2023-01-05 01:32:37,402 - INFO - loss, tie, win prob: tensor([0.2546, 0.0034, 0.7420], grad_fn=<SelectBackward0>)
+2023-01-05 01:32:37,403 - INFO - first move probs: tensor([0.0354, 0.0879, 0.1037, 0.5367, 0.1009, 0.1028, 0.0325],
+       grad_fn=<SelectBackward0>)
+2023-01-05 01:32:37,937 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 01:32:37,945 - INFO - Iteration 3 of 12
+2023-01-05 01:32:37,945 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 01:57:04,494 - INFO - fitting value network
+2023-01-05 01:57:10,030 - INFO - [0] train loss = 0.5869708061218262, test loss = 0.5958200097084045
+2023-01-05 01:58:05,421 - INFO - [10] train loss = 0.5395389199256897, test loss = 0.5834855437278748
+2023-01-05 01:59:00,784 - INFO - [20] train loss = 0.5027406215667725, test loss = 0.5921000242233276
+2023-01-05 01:59:33,975 - INFO - optimal epoch:
+2023-01-05 01:59:33,976 - INFO - [15] train loss = 0.5173643827438354, test loss = 0.5818616151809692
+2023-01-05 01:59:33,976 - INFO - 
+2023-01-05 01:59:33,978 - INFO - fitting policy network
+2023-01-05 01:59:39,475 - INFO - [0] train loss = 1.381864309310913, test loss = 1.3915612697601318
+2023-01-05 02:00:34,470 - INFO - [10] train loss = 1.3135484457015991, test loss = 1.35963773727417
+2023-01-05 02:01:29,512 - INFO - [20] train loss = 1.2718206644058228, test loss = 1.356475830078125
+2023-01-05 02:02:24,661 - INFO - [30] train loss = 1.2188618183135986, test loss = 1.3490521907806396
+2023-01-05 02:03:19,713 - INFO - [40] train loss = 1.17673921585083, test loss = 1.3613299131393433
+2023-01-05 02:03:25,225 - INFO - optimal epoch:
+2023-01-05 02:03:25,225 - INFO - [30] train loss = 1.2188618183135986, test loss = 1.3490521907806396
+2023-01-05 02:03:25,225 - INFO - 
+2023-01-05 02:03:25,231 - INFO - Evaluating Agent:
+2023-01-05 02:03:25,231 - INFO - going 1st vs random
+2023-01-05 02:03:50,783 - INFO - wins = 86, ties = 0, losses = 14
+2023-01-05 02:03:50,789 - INFO - going 2nd vs random
+2023-01-05 02:04:17,465 - INFO - wins = 80, ties = 0, losses = 20
+2023-01-05 02:04:17,468 - INFO - going 1st vs mcts
+2023-01-05 02:04:47,806 - INFO - wins = 25, ties = 0, losses = 75
+2023-01-05 02:04:47,809 - INFO - going 2nd vs mcts
+2023-01-05 02:05:18,396 - INFO - wins = 11, ties = 0, losses = 89
+2023-01-05 02:05:18,400 - INFO - loss, tie, win prob: tensor([0.2059, 0.0028, 0.7913], grad_fn=<SelectBackward0>)
+2023-01-05 02:05:18,401 - INFO - first move probs: tensor([0.0036, 0.0161, 0.0326, 0.8989, 0.0308, 0.0160, 0.0021],
+       grad_fn=<SelectBackward0>)
+2023-01-05 02:05:19,339 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 02:05:19,350 - INFO - Iteration 4 of 12
+2023-01-05 02:05:19,351 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 02:29:29,431 - INFO - fitting value network
+2023-01-05 02:29:34,973 - INFO - [0] train loss = 0.5639164447784424, test loss = 0.5732070207595825
+2023-01-05 02:30:30,383 - INFO - [10] train loss = 0.5116376280784607, test loss = 0.5594282746315002
+2023-01-05 02:31:25,732 - INFO - [20] train loss = 0.4692930281162262, test loss = 0.5559982657432556
+2023-01-05 02:31:58,931 - INFO - optimal epoch:
+2023-01-05 02:31:58,932 - INFO - [15] train loss = 0.486937552690506, test loss = 0.5541917085647583
+2023-01-05 02:31:58,932 - INFO - 
+2023-01-05 02:31:58,934 - INFO - fitting policy network
+2023-01-05 02:32:04,444 - INFO - [0] train loss = 1.0532209873199463, test loss = 1.071207046508789
+2023-01-05 02:32:59,629 - INFO - [10] train loss = 0.9251636862754822, test loss = 1.0167275667190552
+2023-01-05 02:33:54,883 - INFO - [20] train loss = 0.8739824295043945, test loss = 1.0250959396362305
+2023-01-05 02:34:00,423 - INFO - optimal epoch:
+2023-01-05 02:34:00,424 - INFO - [10] train loss = 0.9251636862754822, test loss = 1.0167275667190552
+2023-01-05 02:34:00,424 - INFO - 
+2023-01-05 02:34:00,429 - INFO - Evaluating Agent:
+2023-01-05 02:34:00,429 - INFO - going 1st vs random
+2023-01-05 02:34:23,229 - INFO - wins = 97, ties = 0, losses = 3
+2023-01-05 02:34:23,232 - INFO - going 2nd vs random
+2023-01-05 02:34:50,112 - INFO - wins = 79, ties = 0, losses = 21
+2023-01-05 02:34:50,115 - INFO - going 1st vs mcts
+2023-01-05 02:35:22,124 - INFO - wins = 45, ties = 0, losses = 55
+2023-01-05 02:35:22,127 - INFO - going 2nd vs mcts
+2023-01-05 02:35:50,258 - INFO - wins = 9, ties = 0, losses = 91
+2023-01-05 02:35:50,262 - INFO - loss, tie, win prob: tensor([0.1418, 0.0033, 0.8549], grad_fn=<SelectBackward0>)
+2023-01-05 02:35:50,263 - INFO - first move probs: tensor([3.8116e-05, 3.6479e-04, 1.8158e-03, 9.9465e-01, 2.6242e-03, 4.8423e-04,
+        2.6843e-05], grad_fn=<SelectBackward0>)
+2023-01-05 02:35:51,607 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 02:35:51,827 - INFO - Iteration 5 of 12
+2023-01-05 02:35:51,827 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 03:01:36,841 - INFO - fitting value network
+2023-01-05 03:01:42,365 - INFO - [0] train loss = 0.5407918095588684, test loss = 0.5559365153312683
+2023-01-05 03:02:37,533 - INFO - [10] train loss = 0.47714608907699585, test loss = 0.5424886345863342
+2023-01-05 03:03:32,676 - INFO - [20] train loss = 0.4372410178184509, test loss = 0.5449394583702087
+2023-01-05 03:03:43,701 - INFO - optimal epoch:
+2023-01-05 03:03:43,701 - INFO - [11] train loss = 0.47059252858161926, test loss = 0.5359465479850769
+2023-01-05 03:03:43,702 - INFO - 
+2023-01-05 03:03:43,704 - INFO - fitting policy network
+2023-01-05 03:03:49,207 - INFO - [0] train loss = 0.9549384713172913, test loss = 0.9761070609092712
+2023-01-05 03:04:44,274 - INFO - [10] train loss = 0.8314863443374634, test loss = 0.9317505955696106
+2023-01-05 03:05:39,387 - INFO - [20] train loss = 0.7774897813796997, test loss = 0.9375206232070923
+2023-01-05 03:06:28,980 - INFO - optimal epoch:
+2023-01-05 03:06:28,980 - INFO - [18] train loss = 0.7757387161254883, test loss = 0.9235484600067139
+2023-01-05 03:06:28,980 - INFO - 
+2023-01-05 03:06:28,986 - INFO - Evaluating Agent:
+2023-01-05 03:06:28,986 - INFO - going 1st vs random
+2023-01-05 03:06:55,049 - INFO - wins = 93, ties = 0, losses = 7
+2023-01-05 03:06:55,053 - INFO - going 2nd vs random
+2023-01-05 03:07:23,479 - INFO - wins = 83, ties = 0, losses = 17
+2023-01-05 03:07:23,482 - INFO - going 1st vs mcts
+2023-01-05 03:07:53,510 - INFO - wins = 37, ties = 0, losses = 63
+2023-01-05 03:07:53,514 - INFO - going 2nd vs mcts
+2023-01-05 03:08:24,554 - INFO - wins = 15, ties = 0, losses = 85
+2023-01-05 03:08:24,559 - INFO - loss, tie, win prob: tensor([0.1416, 0.0046, 0.8538], grad_fn=<SelectBackward0>)
+2023-01-05 03:08:24,560 - INFO - first move probs: tensor([1.8125e-04, 6.7145e-05, 4.0099e-04, 9.9890e-01, 2.5877e-04, 7.9459e-05,
+        1.1301e-04], grad_fn=<SelectBackward0>)
+2023-01-05 03:08:26,344 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 03:08:26,565 - INFO - Iteration 6 of 12
+2023-01-05 03:08:26,565 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 03:35:57,945 - INFO - fitting value network
+2023-01-05 03:36:03,470 - INFO - [0] train loss = 0.5266844630241394, test loss = 0.5409539341926575
+2023-01-05 03:36:58,757 - INFO - [10] train loss = 0.46525999903678894, test loss = 0.5313064455986023
+2023-01-05 03:37:54,005 - INFO - [20] train loss = 0.42684873938560486, test loss = 0.5316985845565796
+2023-01-05 03:38:32,637 - INFO - optimal epoch:
+2023-01-05 03:38:32,637 - INFO - [16] train loss = 0.4389745593070984, test loss = 0.5238964557647705
+2023-01-05 03:38:32,637 - INFO - 
+2023-01-05 03:38:32,639 - INFO - fitting policy network
+2023-01-05 03:38:38,147 - INFO - [0] train loss = 0.8336673974990845, test loss = 0.8741434812545776
+2023-01-05 03:39:33,253 - INFO - [10] train loss = 0.730462372303009, test loss = 0.8539759516716003
+2023-01-05 03:40:17,331 - INFO - optimal epoch:
+2023-01-05 03:40:17,332 - INFO - [7] train loss = 0.7399185299873352, test loss = 0.8426010012626648
+2023-01-05 03:40:17,332 - INFO - 
+2023-01-05 03:40:17,338 - INFO - Evaluating Agent:
+2023-01-05 03:40:17,338 - INFO - going 1st vs random
+2023-01-05 03:40:40,281 - INFO - wins = 93, ties = 0, losses = 7
+2023-01-05 03:40:40,285 - INFO - going 2nd vs random
+2023-01-05 03:41:05,976 - INFO - wins = 81, ties = 0, losses = 19
+2023-01-05 03:41:05,980 - INFO - going 1st vs mcts
+2023-01-05 03:41:37,036 - INFO - wins = 27, ties = 0, losses = 73
+2023-01-05 03:41:37,041 - INFO - going 2nd vs mcts
+2023-01-05 03:42:07,637 - INFO - wins = 7, ties = 1, losses = 92
+2023-01-05 03:42:07,643 - INFO - loss, tie, win prob: tensor([0.1124, 0.0031, 0.8845], grad_fn=<SelectBackward0>)
+2023-01-05 03:42:07,644 - INFO - first move probs: tensor([8.1135e-05, 5.6982e-05, 2.8737e-04, 9.9933e-01, 1.2953e-04, 6.7028e-05,
+        4.6592e-05], grad_fn=<SelectBackward0>)
+2023-01-05 03:42:09,605 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 03:42:10,098 - INFO - Iteration 7 of 12
+2023-01-05 03:42:10,098 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 04:09:47,718 - INFO - fitting value network
+2023-01-05 04:09:53,286 - INFO - [0] train loss = 0.5117387771606445, test loss = 0.5325582027435303
+2023-01-05 04:10:48,638 - INFO - [10] train loss = 0.4418269097805023, test loss = 0.5172387361526489
+2023-01-05 04:11:43,949 - INFO - [20] train loss = 0.40466898679733276, test loss = 0.529366672039032
+2023-01-05 04:11:49,486 - INFO - optimal epoch:
+2023-01-05 04:11:49,486 - INFO - [10] train loss = 0.4418269097805023, test loss = 0.5172387361526489
+2023-01-05 04:11:49,487 - INFO - 
+2023-01-05 04:11:49,489 - INFO - fitting policy network
+2023-01-05 04:11:55,004 - INFO - [0] train loss = 0.7790161371231079, test loss = 0.8071373105049133
+2023-01-05 04:12:50,178 - INFO - [10] train loss = 0.6671518683433533, test loss = 0.7918105721473694
+2023-01-05 04:13:39,777 - INFO - optimal epoch:
+2023-01-05 04:13:39,778 - INFO - [8] train loss = 0.6733371019363403, test loss = 0.7848299741744995
+2023-01-05 04:13:39,778 - INFO - 
+2023-01-05 04:13:39,784 - INFO - Evaluating Agent:
+2023-01-05 04:13:39,784 - INFO - going 1st vs random
+2023-01-05 04:14:01,909 - INFO - wins = 95, ties = 0, losses = 5
+2023-01-05 04:14:01,912 - INFO - going 2nd vs random
+2023-01-05 04:14:27,760 - INFO - wins = 84, ties = 0, losses = 16
+2023-01-05 04:14:27,766 - INFO - going 1st vs mcts
+2023-01-05 04:14:57,957 - INFO - wins = 44, ties = 0, losses = 56
+2023-01-05 04:14:57,962 - INFO - going 2nd vs mcts
+2023-01-05 04:15:28,303 - INFO - wins = 17, ties = 0, losses = 83
+2023-01-05 04:15:28,309 - INFO - loss, tie, win prob: tensor([0.1132, 0.0032, 0.8836], grad_fn=<SelectBackward0>)
+2023-01-05 04:15:28,309 - INFO - first move probs: tensor([4.6481e-05, 1.6289e-04, 5.2007e-04, 9.9871e-01, 4.3829e-04, 9.4037e-05,
+        2.7102e-05], grad_fn=<SelectBackward0>)
+2023-01-05 04:15:30,663 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 04:15:31,104 - INFO - Iteration 8 of 12
+2023-01-05 04:15:31,104 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 04:43:27,892 - INFO - fitting value network
+2023-01-05 04:43:33,422 - INFO - [0] train loss = 0.472883939743042, test loss = 0.49613434076309204
+2023-01-05 04:44:28,684 - INFO - [10] train loss = 0.4111912250518799, test loss = 0.4889141619205475
+2023-01-05 04:45:07,376 - INFO - optimal epoch:
+2023-01-05 04:45:07,376 - INFO - [6] train loss = 0.42268964648246765, test loss = 0.48227745294570923
+2023-01-05 04:45:07,376 - INFO - 
+2023-01-05 04:45:07,378 - INFO - fitting policy network
+2023-01-05 04:45:12,871 - INFO - [0] train loss = 0.7177773118019104, test loss = 0.7559624314308167
+2023-01-05 04:46:08,005 - INFO - [10] train loss = 0.6074790954589844, test loss = 0.7419722676277161
+2023-01-05 04:47:03,131 - INFO - [20] train loss = 0.5330144166946411, test loss = 0.7374224662780762
+2023-01-05 04:47:14,164 - INFO - optimal epoch:
+2023-01-05 04:47:14,164 - INFO - [11] train loss = 0.5833324790000916, test loss = 0.7253607511520386
+2023-01-05 04:47:14,164 - INFO - 
+2023-01-05 04:47:14,170 - INFO - Evaluating Agent:
+2023-01-05 04:47:14,170 - INFO - going 1st vs random
+2023-01-05 04:47:38,818 - INFO - wins = 91, ties = 0, losses = 9
+2023-01-05 04:47:38,822 - INFO - going 2nd vs random
+2023-01-05 04:48:05,456 - INFO - wins = 86, ties = 0, losses = 14
+2023-01-05 04:48:05,460 - INFO - going 1st vs mcts
+2023-01-05 04:48:37,425 - INFO - wins = 31, ties = 0, losses = 69
+2023-01-05 04:48:37,429 - INFO - going 2nd vs mcts
+2023-01-05 04:49:08,811 - INFO - wins = 18, ties = 0, losses = 82
+2023-01-05 04:49:08,816 - INFO - loss, tie, win prob: tensor([0.1335, 0.0026, 0.8639], grad_fn=<SelectBackward0>)
+2023-01-05 04:49:08,817 - INFO - first move probs: tensor([5.8448e-06, 2.3834e-05, 1.2548e-04, 9.9973e-01, 8.5636e-05, 2.3286e-05,
+        1.3880e-06], grad_fn=<SelectBackward0>)
+2023-01-05 04:49:11,492 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 04:49:12,152 - INFO - Iteration 9 of 12
+2023-01-05 04:49:12,153 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 05:18:28,374 - INFO - fitting value network
+2023-01-05 05:18:33,914 - INFO - [0] train loss = 0.4617038667201996, test loss = 0.4716130793094635
+2023-01-05 05:19:29,223 - INFO - [10] train loss = 0.39780789613723755, test loss = 0.45804643630981445
+2023-01-05 05:20:24,482 - INFO - [20] train loss = 0.362672358751297, test loss = 0.45906224846839905
+2023-01-05 05:20:46,594 - INFO - optimal epoch:
+2023-01-05 05:20:46,595 - INFO - [13] train loss = 0.3821856677532196, test loss = 0.4520805776119232
+2023-01-05 05:20:46,595 - INFO - 
+2023-01-05 05:20:46,597 - INFO - fitting policy network
+2023-01-05 05:20:52,105 - INFO - [0] train loss = 0.6194511651992798, test loss = 0.6518777012825012
+2023-01-05 05:21:47,275 - INFO - [10] train loss = 0.4965882897377014, test loss = 0.6232782006263733
+2023-01-05 05:22:36,930 - INFO - optimal epoch:
+2023-01-05 05:22:36,930 - INFO - [8] train loss = 0.5067312121391296, test loss = 0.618269145488739
+2023-01-05 05:22:36,930 - INFO - 
+2023-01-05 05:22:36,937 - INFO - Evaluating Agent:
+2023-01-05 05:22:36,937 - INFO - going 1st vs random
+2023-01-05 05:23:02,429 - INFO - wins = 94, ties = 0, losses = 6
+2023-01-05 05:23:02,434 - INFO - going 2nd vs random
+2023-01-05 05:23:27,958 - INFO - wins = 89, ties = 0, losses = 11
+2023-01-05 05:23:27,966 - INFO - going 1st vs mcts
+2023-01-05 05:24:00,126 - INFO - wins = 42, ties = 0, losses = 58
+2023-01-05 05:24:00,132 - INFO - going 2nd vs mcts
+2023-01-05 05:24:31,554 - INFO - wins = 16, ties = 0, losses = 84
+2023-01-05 05:24:31,561 - INFO - loss, tie, win prob: tensor([0.1364, 0.0013, 0.8623], grad_fn=<SelectBackward0>)
+2023-01-05 05:24:31,562 - INFO - first move probs: tensor([4.4417e-06, 1.7315e-05, 8.3271e-05, 9.9982e-01, 7.2888e-05, 5.8873e-06,
+        8.6395e-07], grad_fn=<SelectBackward0>)
+2023-01-05 05:24:34,652 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 05:24:35,317 - INFO - Iteration 10 of 12
+2023-01-05 05:24:35,317 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 05:53:27,201 - INFO - fitting value network
+2023-01-05 05:53:32,725 - INFO - [0] train loss = 0.45611175894737244, test loss = 0.4690803289413452
+2023-01-05 05:54:27,973 - INFO - [10] train loss = 0.39127224683761597, test loss = 0.4576219618320465
+2023-01-05 05:55:06,629 - INFO - optimal epoch:
+2023-01-05 05:55:06,629 - INFO - [6] train loss = 0.406111478805542, test loss = 0.4547649323940277
+2023-01-05 05:55:06,629 - INFO - 
+2023-01-05 05:55:06,631 - INFO - fitting policy network
+2023-01-05 05:55:12,164 - INFO - [0] train loss = 0.5783766508102417, test loss = 0.6126863956451416
+2023-01-05 05:56:07,299 - INFO - [10] train loss = 0.471666157245636, test loss = 0.5975534915924072
+2023-01-05 05:56:45,836 - INFO - optimal epoch:
+2023-01-05 05:56:45,836 - INFO - [6] train loss = 0.48871278762817383, test loss = 0.584933876991272
+2023-01-05 05:56:45,837 - INFO - 
+2023-01-05 05:56:45,843 - INFO - Evaluating Agent:
+2023-01-05 05:56:45,843 - INFO - going 1st vs random
+2023-01-05 05:57:09,969 - INFO - wins = 92, ties = 0, losses = 8
+2023-01-05 05:57:09,973 - INFO - going 2nd vs random
+2023-01-05 05:57:35,397 - INFO - wins = 79, ties = 0, losses = 21
+2023-01-05 05:57:35,403 - INFO - going 1st vs mcts
+2023-01-05 05:58:07,169 - INFO - wins = 54, ties = 0, losses = 46
+2023-01-05 05:58:07,175 - INFO - going 2nd vs mcts
+2023-01-05 05:58:35,919 - INFO - wins = 14, ties = 0, losses = 86
+2023-01-05 05:58:35,926 - INFO - loss, tie, win prob: tensor([0.1457, 0.0019, 0.8524], grad_fn=<SelectBackward0>)
+2023-01-05 05:58:35,927 - INFO - first move probs: tensor([9.3518e-06, 1.7176e-05, 1.3998e-04, 9.9968e-01, 1.3869e-04, 1.2733e-05,
+        2.5107e-06], grad_fn=<SelectBackward0>)
+2023-01-05 05:58:39,392 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 05:58:40,272 - INFO - Iteration 11 of 12
+2023-01-05 05:58:40,272 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 06:26:10,202 - INFO - fitting value network
+2023-01-05 06:26:15,737 - INFO - [0] train loss = 0.4478010833263397, test loss = 0.46719497442245483
+2023-01-05 06:27:11,026 - INFO - [10] train loss = 0.37926381826400757, test loss = 0.45269715785980225
+2023-01-05 06:28:00,711 - INFO - optimal epoch:
+2023-01-05 06:28:00,712 - INFO - [8] train loss = 0.38780421018600464, test loss = 0.4522327780723572
+2023-01-05 06:28:00,712 - INFO - 
+2023-01-05 06:28:00,714 - INFO - fitting policy network
+2023-01-05 06:28:06,214 - INFO - [0] train loss = 0.6535994410514832, test loss = 0.686957061290741
+2023-01-05 06:29:01,409 - INFO - [10] train loss = 0.5265993475914001, test loss = 0.6546712517738342
+2023-01-05 06:29:56,522 - INFO - [20] train loss = 0.46999210119247437, test loss = 0.6622377038002014
+2023-01-05 06:30:18,552 - INFO - optimal epoch:
+2023-01-05 06:30:18,552 - INFO - [13] train loss = 0.501470685005188, test loss = 0.6464590430259705
+2023-01-05 06:30:18,552 - INFO - 
+2023-01-05 06:30:18,559 - INFO - Evaluating Agent:
+2023-01-05 06:30:18,559 - INFO - going 1st vs random
+2023-01-05 06:30:43,962 - INFO - wins = 96, ties = 0, losses = 4
+2023-01-05 06:30:43,968 - INFO - going 2nd vs random
+2023-01-05 06:31:10,715 - INFO - wins = 89, ties = 0, losses = 11
+2023-01-05 06:31:10,722 - INFO - going 1st vs mcts
+2023-01-05 06:31:45,458 - INFO - wins = 44, ties = 0, losses = 56
+2023-01-05 06:31:45,465 - INFO - going 2nd vs mcts
+2023-01-05 06:32:16,242 - INFO - wins = 19, ties = 0, losses = 81
+2023-01-05 06:32:16,249 - INFO - loss, tie, win prob: tensor([9.6439e-02, 8.7898e-04, 9.0268e-01], grad_fn=<SelectBackward0>)
+2023-01-05 06:32:16,250 - INFO - first move probs: tensor([1.5410e-05, 1.6559e-05, 4.9741e-05, 9.9987e-01, 2.3110e-05, 1.8104e-05,
+        1.0241e-05], grad_fn=<SelectBackward0>)
+2023-01-05 06:32:20,005 - INFO - copied agent to training_output/Connect4/agent.pkl
+2023-01-05 06:32:21,103 - INFO - Iteration 12 of 12
+2023-01-05 06:32:21,104 - INFO - generating 120000 datapoint from 5000 games
+2023-01-05 07:00:59,005 - INFO - fitting value network
+2023-01-05 07:01:04,554 - INFO - [0] train loss = 0.4321247637271881, test loss = 0.4482268989086151
+2023-01-05 07:01:59,845 - INFO - [10] train loss = 0.37084951996803284, test loss = 0.4410717189311981
+2023-01-05 07:02:27,543 - INFO - optimal epoch:
+2023-01-05 07:02:27,543 - INFO - [4] train loss = 0.39543840289115906, test loss = 0.43617865443229675
+2023-01-05 07:02:27,543 - INFO - 
+2023-01-05 07:02:27,545 - INFO - fitting policy network
+2023-01-05 07:02:33,059 - INFO - [0] train loss = 0.5755730271339417, test loss = 0.6095865368843079
+2023-01-05 07:03:28,199 - INFO - [10] train loss = 0.4597514569759369, test loss = 0.5825077891349792
+2023-01-05 07:04:01,347 - INFO - optimal epoch:
+2023-01-05 07:04:01,347 - INFO - [5] train loss = 0.4928998053073883, test loss = 0.5811866521835327
+2023-01-05 07:04:01,347 - INFO - 
+2023-01-05 07:04:01,355 - INFO - Evaluating Agent:
+2023-01-05 07:04:01,355 - INFO - going 1st vs random
+2023-01-05 07:04:24,986 - INFO - wins = 95, ties = 0, losses = 5
+2023-01-05 07:04:24,992 - INFO - going 2nd vs random
+2023-01-05 07:04:50,115 - INFO - wins = 85, ties = 0, losses = 15
+2023-01-05 07:04:50,120 - INFO - going 1st vs mcts
+2023-01-05 07:05:23,545 - INFO - wins = 37, ties = 0, losses = 63
+2023-01-05 07:05:23,554 - INFO - going 2nd vs mcts
+2023-01-05 07:05:53,757 - INFO - wins = 26, ties = 0, losses = 74
+2023-01-05 07:05:53,765 - INFO - loss, tie, win prob: tensor([0.0822, 0.0020, 0.9158], grad_fn=<SelectBackward0>)
+2023-01-05 07:05:53,765 - INFO - first move probs: tensor([2.4229e-05, 3.4712e-05, 8.7475e-05, 9.9971e-01, 7.4310e-05, 5.1760e-05,
+        2.1116e-05], grad_fn=<SelectBackward0>)
+2023-01-05 07:05:58,022 - INFO - copied agent to training_output/Connect4/agent.pkl

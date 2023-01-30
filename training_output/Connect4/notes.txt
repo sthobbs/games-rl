@@ -1,0 +1,4 @@
+Trained on c2d-highcpu-112 (112 vCPUs, 224 GB RAM) machine on GCP.
+
+The results aren't as good as I was hoping.
+Perhaps I need different a different architecture or different hyperparameters.
